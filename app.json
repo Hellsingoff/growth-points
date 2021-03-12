@@ -1,0 +1,7 @@
+{
+  "name": "Точки роста",
+  "description": "Тестовый бот.",
+  "image": "heroku/python",
+  "repository": "https://github.com/Hellsingoff/growth-points",
+  "keywords": ["python"]
+}
