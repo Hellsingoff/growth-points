@@ -66,18 +66,15 @@ async def msg_switcher():
                            can_invite_users=True,
                            can_pin_messages=False)
     while True:
-        await sleep(59)
-        time = (6 < dt.now().time().hour < 19) and (dt.now().weekday() < 5)
-        await send_message(84381379, f'{time} time') # test
+        time = 6 < dt.now().time().hour < 19 and dt.now().weekday() < 5
         for chat_id in (-1001152994794, -1001186536726, -1001139317566, -1001163179007):
             chat = await bot.get_chat(chat_id)
             msg_perm = chat.permissions.can_send_messages
             if msg_perm and not time:
-                await send_message(84381379, f'{chat_id} ban') # test
                 await bot.set_chat_permissions(chat_id, permissions=ban)
             elif not msg_perm and time:
-                await send_message(84381379, f'{chat_id} free') # test
-                await bot.set_chat_permissions(chat_id, permissions=free) 
+                await bot.set_chat_permissions(chat_id, permissions=free)
+        await sleep(59)
 
 
 @dp.message_handler(commands=['start'])
@@ -102,4 +99,3 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.create_task(msg_switcher())
     executor.start_polling(dp)
-    await send_message(84381379, 'Up!') # test
