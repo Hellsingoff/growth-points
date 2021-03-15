@@ -47,7 +47,8 @@ async def send_message(user_id: int, text: str) -> bool:
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    await send_message(message.from_user.id, 'Hi!')
+    # await send_message(message.from_user.id, 'Hi!')
+    await send_message(84381379, f'{str(message.chat.id)} {message.chat.title}')
 
 
 # error handler
