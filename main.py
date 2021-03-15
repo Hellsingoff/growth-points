@@ -1,54 +1,19 @@
 from os import getenv
 from datetime import datetime as dt
 
+import asyncio
+from aiogram.types import ChatPermissions
 from dotenv import load_dotenv
 import logging
 from asyncio import sleep
 
-from aiogram.types import ChatPermissions
 from aiogram import Bot, Dispatcher, executor, types, exceptions
+
 
 bot = Bot(token=getenv('TG_TOKEN'))
 dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('broadcast')
-
-
-async def msg_switcher():
-    ban = ChatPermissions(can_send_messages=False,
-                          can_send_media_messages=False,
-                          can_send_polls=False,
-                          can_send_other_messages=False,
-                          can_add_web_page_previews=False,
-                          can_change_info=False,
-                          can_invite_users=True,
-                          can_pin_messages=False)
-    free = ChatPermissions(can_send_messages=True,
-                           can_send_media_messages=True,
-                           can_send_polls=False,
-                           can_send_other_messages=False,
-                           can_add_web_page_previews=True,
-                           can_change_info=False,
-                           can_invite_users=True,
-                           can_pin_messages=False)
-    while True:
-        await sleep(59)
-        time = 7 >= dt.now().hour >= 19 or dt.now().weekday() == 6
-        for chat_id in (111, 222, 333):  # поправить id
-            msg_perm = bot.get_chat(chat_id).permissions.can_send_messages
-            if msg_perm and time:
-                await bot.set_chat_permissions(chat_id, permissions=ban)
-                await send_message(chat_id, "Уважаемые коллеги!\n" +
-                                            "По многочисленным просьбам мы ограничили возможность " +
-                                            "писать сообщения ночью и в воскресенье.\n" +
-                                            "пн 7:00 - 20:00\n" +
-                                            "вт 7:00 - 20:00\n" +
-                                            "ср 7:00 - 20:00\n" +
-                                            "чт 7:00 - 20:00\n" +
-                                            "пт 7:00 - 20:00\n" +
-                                            "сб 7:00 - 20:00")
-            elif not (msg_perm and time):
-                await bot.set_chat_permissions(chat_id, permissions=free)
 
 
 # safe sending message function
@@ -83,9 +48,46 @@ async def send_message(user_id: int, text: str) -> bool:
     return False
 
 
+async def msg_switcher():
+    ban = ChatPermissions(can_send_messages=False,
+                          can_send_media_messages=False,
+                          can_send_polls=False,
+                          can_send_other_messages=False,
+                          can_add_web_page_previews=False,
+                          can_change_info=False,
+                          can_invite_users=True,
+                          can_pin_messages=False)
+    free = ChatPermissions(can_send_messages=True,
+                           can_send_media_messages=True,
+                           can_send_polls=True,
+                           can_send_other_messages=True,
+                           can_add_web_page_previews=True,
+                           can_change_info=False,
+                           can_invite_users=True,
+                           can_pin_messages=False)
+    while True:
+        await sleep(59)
+        time = (6 < dt.now().time().hour < 19) and (dt.now().weekday() < 5)
+        await send_message(84381379, f'{time} time') # test
+        for chat_id in (-1001152994794, -1001186536726, -1001139317566, -1001163179007):
+            chat = await bot.get_chat(chat_id)
+            msg_perm = chat.permissions.can_send_messages
+            if msg_perm and not time:
+                await send_message(84381379, f'{chat_id} ban') # test
+                await bot.set_chat_permissions(chat_id, permissions=ban)
+            elif not msg_perm and time:
+                await send_message(84381379, f'{chat_id} free') # test
+                await bot.set_chat_permissions(chat_id, permissions=free) 
+
+
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     await send_message(message.from_user.id, 'Hi!')
+
+
+@dp.message_handler(commands=['id'])
+async def start(message: types.Message):
+    await send_message(84381379, f'{str(message.chat.id)} {message.chat.title}')
 
 
 # error handler
@@ -97,5 +99,7 @@ async def error_log(*args):
 if __name__ == '__main__':
     log.info('Start.')
     load_dotenv()
-    dp.loop.create_task(msg_switcher())
+    loop = asyncio.get_event_loop()
+    loop.create_task(msg_switcher())
     executor.start_polling(dp)
+    await send_message(84381379, 'Up!') # test
