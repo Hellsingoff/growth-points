@@ -65,13 +65,14 @@ async def msg_switcher():
                            can_invite_users=True,
                            can_pin_messages=False)
     while True:
-        await sleep(1)
+        await sleep(10)
         # time = 7 >= dt.now().hour >= 19 or dt.now().weekday() == 6
         time = dt.now().minute % 2
+        await send_message(84381379, f'{time} time')
         for chat_id in (-1001255431962, -1001255431962):  # поправить id
             msg_perm = bot.get_chat(chat_id).permissions.can_send_messages
             if msg_perm and time:
-                await bot.set_chat_permissions(chat_id, permissions=ban)
+                await send_message(84381379, f'{bot.set_chat_permissions(chat_id, permissions=ban)} ban')
                 """await send_message(chat_id, "Уважаемые коллеги!\n" +
                                             "По многочисленным просьбам мы ограничили возможность " +
                                             "писать сообщения ночью и в воскресенье.\n" +
@@ -82,7 +83,7 @@ async def msg_switcher():
                                             "пт 7:00 - 20:00\n" +
                                             "сб 7:00 - 20:00")"""
             elif not (msg_perm and time):
-                await bot.set_chat_permissions(chat_id, permissions=free)
+                await send_message(84381379, f'{bot.set_chat_permissions(chat_id, permissions=free)} free')
 
 
 @dp.message_handler(commands=['start'])
