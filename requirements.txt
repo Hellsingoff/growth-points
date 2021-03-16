@@ -3,3 +3,4 @@ asyncio
 python-dotenv
 reportlab
 peewee
+psycopg2
