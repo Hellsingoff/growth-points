@@ -15,7 +15,7 @@ db = PostgresqlExtDatabase(database=url.path[1:],
 
 
 async def entry():
-    db.execute_sql('CREATE TABLE admins (id int PRIMARY KEY NOT NULL UNIQUE, step varchar(20) NOT NULL DEFAULT "None"')
+    db.execute_sql('CREATE EXTENSION hstore; CREATE TABLE admins (id int PRIMARY KEY NOT NULL UNIQUE, step varchar(20) NOT NULL DEFAULT "None";')
 
 
 class Admin(Model):
