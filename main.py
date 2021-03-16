@@ -1,3 +1,4 @@
+import os
 from os import getenv
 from datetime import datetime as dt
 
@@ -6,6 +7,12 @@ from aiogram.types import ChatPermissions
 from dotenv import load_dotenv
 import logging
 from asyncio import sleep
+
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+from reportlab.pdfgen import canvas
 
 from aiogram import Bot, Dispatcher, executor, types, exceptions
 
@@ -86,6 +93,33 @@ async def start(message: types.Message):
 @dp.message_handler(commands=['id'])
 async def start(message: types.Message):
     await send_message(84381379, f'{str(message.chat.id)} {message.chat.title}')
+
+
+@dp.message_handler(commands=['sert'])
+async def start(message: types.Message):
+    width, height = A4
+    background = 'sert.png'
+    fio = 'Иванов Иван Иванович'
+    female = False
+    event_type = 'семинаре'
+    event = 'Первая региональная "Бла-бла"'
+    date = '«31» января 2021 г.'
+
+    pdfmetrics.registerFont(TTFont('Liberation', 'Liberation.ttf', 'UTF-8'))
+    c = canvas.Canvas(f"{fio}.pdf", pagesize=A4)
+    c.setFont('Liberation', 18)
+    c.drawImage(background, 0, 0, width=width, height=height)
+    c.drawString(75, 520, "подтверждает, что ")
+    c.drawString(75, 410, f"принял{'а' if female else ''} участие в {event_type}")
+    c.drawString(75, 380, event)
+    c.drawString(300, 310, f'дата выдачи   {date}')
+    c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
+    c.drawString(235, 120, f'г. Екатеринбург')
+    c.setFont('Liberation', 28)
+    c.drawString(75, 460, fio)
+    c.save()
+    await bot.send_document(message.from_user.id, f'{fio}.pdf')
+    os.remove(f'{fio}.pdf')
 
 
 # error handler
