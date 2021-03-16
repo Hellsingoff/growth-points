@@ -128,8 +128,7 @@ async def sert(message: types.Message):
 
 @dp.message_handler(commands=['sql'])
 async def sql(message: types.Message):
-    db = PostgresqlDatabase('db')
-    db.create_tables([sql.Admin])
+    await sql.entry()
 
 
 

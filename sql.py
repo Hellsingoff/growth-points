@@ -14,6 +14,10 @@ db = PostgresqlExtDatabase(database=url.path[1:],
                            register_hstore=True)
 
 
+async def entry():
+    db.execute_sql('CREATE TABLE admins (id int PRIMARY KEY NOT NULL UNIQUE, step varchar(20) NOT NULL DEFAULT "None"')
+
+
 class Admin(Model):
     id = IntegerField(null=False, unique=True, primary_key=True)
     step = CharField(null=False, max_length=10, default='None')
@@ -22,3 +26,4 @@ class Admin(Model):
         primary_key = False
         database = db
         db_table = 'admins'
+
