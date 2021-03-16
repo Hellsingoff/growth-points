@@ -96,7 +96,7 @@ async def start(message: types.Message):
 
 
 @dp.message_handler(commands=['sert'])
-async def start(message: types.Message):
+async def sert(message: types.Message):
     width, height = A4
     background = 'sert.png'
     fio = 'Иванов Иван Иванович'
@@ -118,6 +118,7 @@ async def start(message: types.Message):
     c.setFont('Liberation', 28)
     c.drawString(75, 460, fio)
     c.save()
+    await message.from_user.id, str(os.listdir())
     await bot.send_document(message.from_user.id, f'{fio}.pdf')
     os.remove(f'{fio}.pdf')
 
