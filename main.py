@@ -127,9 +127,8 @@ async def sert(message: types.Message):
 
 
 @dp.message_handler(commands=['sql'])
-async def sql(message: types.Message):
+async def cr_table(message: types.Message):
     await sql.entry()
-
 
 
 # error handler
