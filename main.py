@@ -3,19 +3,19 @@ from os import getenv
 from datetime import datetime as dt
 
 from aiogram.types.input_file import InputFile
-import asyncio
+from aiogram import Bot, Dispatcher, executor, types, exceptions
 from aiogram.types import ChatPermissions
+import asyncio
+from asyncio import sleep
 from dotenv import load_dotenv
 import logging
-from asyncio import sleep
-
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
 from reportlab.pdfgen import canvas
 
-from aiogram import Bot, Dispatcher, executor, types, exceptions
+import sql
+from peewee import *
 
 
 bot = Bot(token=getenv('TG_TOKEN'))
@@ -75,14 +75,15 @@ async def msg_switcher():
                            can_pin_messages=False)
     while True:
         time = 6 < (dt.now().time().hour + 5) % 24 < 19 and dt.now().weekday() < 5
-        await send_message(84381379, str((dt.now().time().hour + 5) % 24))
         for chat_id in (-1001152994794, -1001186536726, -1001139317566, -1001163179007):
             chat = await bot.get_chat(chat_id)
             msg_perm = chat.permissions.can_send_messages
             if msg_perm and not time:
                 await bot.set_chat_permissions(chat_id, permissions=ban)
+                await send_message(84381379, f'{chat_id} ban')
             elif not msg_perm and time:
                 await bot.set_chat_permissions(chat_id, permissions=free)
+                await send_message(84381379, f'{chat_id} free')
         await sleep(30)
 
 
@@ -104,7 +105,8 @@ async def sert(message: types.Message):
     female = False
     event_type = 'семинаре'
     event = 'Первая региональная "Бла-бла"'
-    date = '«31» января 2021 г.'
+    month_year = 'января 2021'
+    day = 31
 
     pdfmetrics.registerFont(TTFont('Liberation', 'Liberation.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
@@ -113,16 +115,22 @@ async def sert(message: types.Message):
     c.drawString(75, 520, "подтверждает, что ")
     c.drawString(75, 410, f"принял{'а' if female else ''} участие в {event_type}")
     c.drawString(75, 380, event)
-    c.drawString(300, 310, f'дата выдачи   {date}')
+    c.drawString(300, 310, f'дата выдачи   «{day}» {month_year} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
     c.setFont('Liberation', 28)
     c.drawString(75, 460, fio)
     c.save()
-    await send_message(message.from_user.id, str(os.listdir()))
     agenda = InputFile("sert.pdf", filename=f"{fio}.pdf")
     await bot.send_document(message.from_user.id, agenda)
     os.remove('sert.pdf')
+
+
+@dp.message_handler(commands=['sql'])
+async def sql(message: types.Message):
+    db = PostgresqlDatabase('db')
+    db.create_tables([sql.Admin])
+
 
 
 # error handler

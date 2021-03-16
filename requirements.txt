@@ -2,3 +2,4 @@ aiogram
 asyncio
 python-dotenv
 reportlab
+peewee
