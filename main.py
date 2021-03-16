@@ -89,7 +89,10 @@ async def msg_switcher():
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
-    await send_message(message.from_user.id, 'Hi!')
+    if sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists():
+        await send_message(message.from_user.id, 'You are admin!!')
+    else:
+        await send_message(message.from_user.id, 'Hi!')
 
 
 @dp.message_handler(commands=['id'])

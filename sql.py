@@ -14,10 +14,6 @@ db = PostgresqlExtDatabase(database=url.path[1:],
                            register_hstore=True)
 
 
-async def entry():
-    Admin.create(id=672924684, step='None')
-
-
 class Admin(Model):
     id = IntegerField(null=False, unique=True, primary_key=True)
     step = CharField(null=False, max_length=10, default='None')
