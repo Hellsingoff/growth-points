@@ -66,7 +66,9 @@ async def msg_switcher():
                            can_invite_users=True,
                            can_pin_messages=False)
     while True:
-        time = 6 < dt.now().time().hour < 19 and dt.now().weekday() < 5
+        #time = 6 < dt.now().time().hour < 19 and dt.now().weekday() < 5
+        time = True
+        await send_message(84381379, str(dt.now().time().hour))
         for chat_id in (-1001152994794, -1001186536726, -1001139317566, -1001163179007):
             chat = await bot.get_chat(chat_id)
             msg_perm = chat.permissions.can_send_messages
