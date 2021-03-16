@@ -2,6 +2,7 @@ import os
 from os import getenv
 from datetime import datetime as dt
 
+from aiogram.types.input_file import InputFile
 import asyncio
 from aiogram.types import ChatPermissions
 from dotenv import load_dotenv
@@ -106,7 +107,7 @@ async def sert(message: types.Message):
     date = '«31» января 2021 г.'
 
     pdfmetrics.registerFont(TTFont('Liberation', 'Liberation.ttf', 'UTF-8'))
-    c = canvas.Canvas(f"{fio}.pdf", pagesize=A4)
+    c = canvas.Canvas("sert.pdf", pagesize=A4)
     c.setFont('Liberation', 18)
     c.drawImage(background, 0, 0, width=width, height=height)
     c.drawString(75, 520, "подтверждает, что ")
@@ -119,8 +120,9 @@ async def sert(message: types.Message):
     c.drawString(75, 460, fio)
     c.save()
     await send_message(message.from_user.id, str(os.listdir()))
-    await bot.send_document(message.from_user.id, f'{fio}.pdf')
-    os.remove(f'{fio}.pdf')
+    agenda = InputFile("sert.pdf", filename=f"{fio}.pdf")
+    await bot.send_document(message.from_user.id, agenda)
+    os.remove('sert.pdf')
 
 
 # error handler
