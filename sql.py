@@ -11,7 +11,7 @@ db = PostgresqlExtDatabase(database=url.path[1:],
                            password=url.password,
                            host=url.hostname,
                            port=url.port,
-                           register_hstore=False)
+                           register_hstore=True)
 
 
 async def entry():
