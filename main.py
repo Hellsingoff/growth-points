@@ -125,15 +125,14 @@ async def sertificate_generator(user_id):
     c.drawString(75, 410, f"принял{'а' if female else ''} участие в {sert_config[user_id]['event_type']}")
     event = sert_config[user_id]['event']
     while len(event):
-        if len(event) < 39:
+        if len(event) < 49:
             c.drawString(75, coord, event)
             event = ''
         else:
-            space = event[:40].rfind(' ')
+            space = event[:50].rfind(' ')
             c.drawString(75, coord, event[:space])
             event = event[space+1:]
             coord -= 30
-    c.drawString(75, 380, sert_config[user_id]['event'])
     c.drawString(300, 290, f'дата выдачи   «{sert_config[user_id]["day"]}» {sert_config[user_id]["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
