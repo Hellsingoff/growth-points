@@ -154,6 +154,18 @@ async def sert_questions(user_id, text):
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
                            'Название мероприятия? (с переносами, не более 3 строк)')
+    elif 'event' not in sert_config[user_id] and 'day' in sert_config[user_id]:
+        sert_config[user_id]['event'] = text
+        await send_message(user_id,
+                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
+                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
+                           f'{sert_config[user_id]["event"]}'
+                           f'дата выдачи   «{sert_config[user_id]["day"]}» '
+                           f'{sert_config[user_id]["month_year"]} г.')
+        await sertificate_generator(user_id)
+        await send_message(user_id, 'Если файл выглядит верно - напишите "Проверено".'
+                           'Если необходимо переделать данные - напишите "Отмена".'
+                           'Изменить переносы в названии мероприятия - "-".')
     elif 'event' not in sert_config[user_id]:
         sert_config[user_id]['event'] = text
         await send_message(user_id,
@@ -161,7 +173,7 @@ async def sert_questions(user_id, text):
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
                            f'{sert_config[user_id]["event"]}'
                            'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
-    elif 'date' not in sert_config[user_id] and len(text.split(maxsplit=1)) == 2:
+    elif 'day' not in sert_config[user_id] and len(text.split(maxsplit=1)) == 2:
         arr = text.split(maxsplit=1)
         sert_config[user_id]['day'] = arr[0]
         sert_config[user_id]['month_year'] = arr[1]
@@ -170,12 +182,22 @@ async def sert_questions(user_id, text):
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
                            f'{sert_config[user_id]["event"]}'
                            f'дата выдачи   «{sert_config[user_id]["day"]}» '
-                           f'{sert_config[user_id]["month_year"]} г.')
+                           f'{sert_config[user_id]["month_year"]} г.'
+                           'Если файл выглядит верно - напишите "Проверено".'
+                           'Если необходимо переделать данные - напишите "Отмена".'
+                           'Изменить переносы в названии мероприятия - "-".')
         await sertificate_generator(user_id)
-        admin = sql.Admin.get(sql.Admin.id == user_id)
-        admin.step = 'None'
-        admin.save()
-        sert_config.pop(user_id)
+    elif 'day' in sert_config[user_id]:
+        if text == 'Проверено':
+            admin = sql.Admin.get(sql.Admin.id == user_id)
+            admin.step = 'file'
+            admin.save()
+        elif text == 'Отмена':
+            sert_config.pop(user_id)
+            await send_message(user_id, 'Отменено')
+        elif text == '-':
+            sert_config[user_id].pop('event')
+            await send_message(user_id, 'Название мероприятия? (с переносами, не более 3 строк)')
 
 
 # others (only admin)
@@ -184,6 +206,11 @@ async def switch(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     if admin.step == 'sert' and message.text:
         await sert_questions(message.from_user.id, message.text)
+
+
+@dp.message_handler(content_types=['document'])
+async def file(message: types.Message):
+    await send_message(message.from_user.id, message.document.file_unique_id)
 
 
 # error handler
