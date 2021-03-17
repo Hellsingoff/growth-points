@@ -142,7 +142,7 @@ async def sertificate_generator(user_id):
 @dp.message_handler(commands=['admin'])
 async def add_adm(message: types.Message):
     text = message.text.split()[1:]
-    if text[0] == getenv('KEYWORD') and len(text) == 2 and type(text[1]) is int:
+    if text[0] == getenv('KEYWORD') and len(text) == 2 and text[1].isdigit():
         sql.Admin.create(id=int(text[1]), step='None')
         await send_message(message.from_user.id, 'Success')
 
