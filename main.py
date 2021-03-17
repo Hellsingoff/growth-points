@@ -125,7 +125,7 @@ async def sertificate_generator(user_id):
     c.drawString(75, 410, f"принял{'а' if female else ''} участие в {sert_config[user_id]['event_type']}")
     event = sert_config[user_id]['event']
     while len(event):
-        if len(event) < 29:
+        if len(event) < 39:
             c.drawString(75, coord, event)
             event = ''
         else:
