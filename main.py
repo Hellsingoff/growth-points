@@ -26,11 +26,6 @@ background = 'sert.png'
 female = False
 sert_config = {}
 
-event_type = 'семинаре'
-event = 'Первая региональная '
-month_year = 'января 2021'
-day = 31
-
 
 # safe sending message function
 async def send_message(user_id: int, text: str) -> bool:
@@ -120,14 +115,26 @@ async def sert(message: types.Message):
 
 
 async def sertificate_generator(user_id):
+    coord = 380
     pdfmetrics.registerFont(TTFont('Liberation', 'Liberation.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
     c.setFont('Liberation', 18)
+    c.setTitle(sert_config[user_id]['fio'])
     c.drawImage(background, 0, 0, width=width, height=height)
     c.drawString(75, 520, "подтверждает, что ")
     c.drawString(75, 410, f"принял{'а' if female else ''} участие в {sert_config[user_id]['event_type']}")
+    event = sert_config[user_id]['event']
+    while len(event):
+        if len(event) < 29:
+            c.drawString(75, coord, sert_config[user_id]['event'])
+            event = ''
+        else:
+            space = event[:30].rfind(' ')
+            c.drawString(75, coord, sert_config[:space])
+            event = event[space+1:]
+            coord -= 30
     c.drawString(75, 380, sert_config[user_id]['event'])
-    c.drawString(300, 310, f'дата выдачи   «{sert_config[user_id]["day"]}» {sert_config[user_id]["month_year"]} г.')
+    c.drawString(300, 290, f'дата выдачи   «{sert_config[user_id]["day"]}» {sert_config[user_id]["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
     c.setFont('Liberation', 28)
@@ -176,7 +183,7 @@ async def sert_questions(user_id, text):
         admin = sql.Admin.get(sql.Admin.id == user_id)
         admin.step = 'None'
         admin.save()
-        sert_config.pop(sert_config[user_id])
+        sert_config.pop(user_id)
 
 
 # others (only admin)
