@@ -23,10 +23,11 @@ log = logging.getLogger('broadcast')
 
 width, height = A4
 background = 'sert.png'
-fio = 'Иванов Иван Иванович'
 female = False
+sert_config = {}
+
 event_type = 'семинаре'
-event = 'Первая региональная "Бла-бла"'
+event = 'Первая региональная '
 month_year = 'января 2021'
 day = 31
 
@@ -113,6 +114,7 @@ async def sert(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     admin.step = 'sert'
     admin.save()
+    sert_config[message.from_user.id] = {'fio': 'Иванов Иван Иванович'}
     await send_message(message.from_user.id, 'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\nпринял участие в ___'
                                              '\n(семинаре|вебинаре|конференции)?')
 
@@ -123,19 +125,20 @@ async def sertificate_generator(user_id):
     c.setFont('Liberation', 18)
     c.drawImage(background, 0, 0, width=width, height=height)
     c.drawString(75, 520, "подтверждает, что ")
-    c.drawString(75, 410, f"принял{'а' if female else ''} участие в {event_type}")
-    c.drawString(75, 380, event)
-    c.drawString(300, 310, f'дата выдачи   «{day}» {month_year} г.')
+    c.drawString(75, 410, f"принял{'а' if female else ''} участие в {sert_config[user_id]['event_type']}")
+    c.drawString(75, 380, sert_config[user_id]['event'])
+    c.drawString(300, 310, f'дата выдачи   «{sert_config[user_id]["day"]}» {sert_config[user_id]["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
     c.setFont('Liberation', 28)
-    c.drawString(75, 460, fio)
+    c.drawString(75, 460, sert_config[user_id]['fio'])
     c.save()
-    agenda = InputFile("sert.pdf", filename=f"{fio}.pdf")
-    await bot.send_document(user_id, agenda)
+    pdf = InputFile("sert.pdf", filename=f"{sert_config[user_id]['fio']}.pdf")
+    await bot.send_document(user_id, pdf)
     os.remove('sert.pdf')
 
 
+# adding a new admin
 @dp.message_handler(commands=['admin'])
 async def add_adm(message: types.Message):
     text = message.text.split()[1:]
@@ -144,9 +147,37 @@ async def add_adm(message: types.Message):
         await send_message(message.from_user.id, 'Success')
 
 
-@dp.message_handler()
-async def add_adm(message: types.Message):
-    await send_message(message.from_user.id, 'Yep.')
+# others sert config
+@dp.message_handler(lambda message: sql.Admin.get(sql.Admin.id == message.from_user.id).step == 'sert')
+async def sert(message: types.Message):
+    if 'event_type' not in sert_config[message.from_user.id] and len(message.text):
+        sert_config[message.from_user.id]['event_type'] = message.text
+        await send_message(message.from_user.id,
+                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
+                           f'принял участие в {sert_config[message.from_user.id]["event_type"]}\n'
+                           'Название мероприятия? (не забудьте склонение)')
+    elif 'event' not in sert_config[message.from_user.id] and len(message.text):
+        sert_config[message.from_user.id]['event'] = message.text
+        await send_message(message.from_user.id,
+                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
+                           f'принял участие в {sert_config[message.from_user.id]["event_type"]}\n'
+                           f'{sert_config[message.from_user.id]["event"]}'
+                           'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
+    elif 'date' not in sert_config[message.from_user.id] and len(message.text.split(maxsplit=1)) == 2:
+        arr = message.text.split(maxsplit=1)
+        sert_config[message.from_user.id]['day'] = arr[0]
+        sert_config[message.from_user.id]['month_year'] = arr[1]
+        await send_message(message.from_user.id,
+                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
+                           f'принял участие в {sert_config[message.from_user.id]["event_type"]}\n'
+                           f'{sert_config[message.from_user.id]["event"]}'
+                           f'дата выдачи   «{sert_config[message.from_user.id]["day"]}» '
+                           f'{sert_config[message.from_user.id]["month_year"]} г.')
+        await sertificate_generator(message.from_user.id)
+        admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+        admin.step = 'None'
+        admin.save()
+        sert_config.pop(sert_config[message.from_user.id])
 
 
 # error handler
