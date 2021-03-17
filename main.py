@@ -109,7 +109,7 @@ async def start(message: types.Message):
 
 
 @dp.message_handler(lambda message: message.text[:5] == '/sert' and
-                                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
+                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def sert(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     admin.step = 'sert'
@@ -147,37 +147,44 @@ async def add_adm(message: types.Message):
         await send_message(message.from_user.id, 'Success')
 
 
-# others sert config
-@dp.message_handler(lambda message: sql.Admin.get(sql.Admin.id == message.from_user.id).step == 'sert')
-async def sert(message: types.Message):
-    if 'event_type' not in sert_config[message.from_user.id] and len(message.text):
-        sert_config[message.from_user.id]['event_type'] = message.text
-        await send_message(message.from_user.id,
+# others (only admin)
+async def sert_questions(user_id, text):
+    if 'event_type' not in sert_config[user_id]:
+        sert_config[user_id]['event_type'] = text
+        await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
-                           f'принял участие в {sert_config[message.from_user.id]["event_type"]}\n'
+                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
                            'Название мероприятия? (не забудьте склонение)')
-    elif 'event' not in sert_config[message.from_user.id] and len(message.text):
-        sert_config[message.from_user.id]['event'] = message.text
-        await send_message(message.from_user.id,
+    elif 'event' not in sert_config[user_id]:
+        sert_config[user_id]['event'] = text
+        await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
-                           f'принял участие в {sert_config[message.from_user.id]["event_type"]}\n'
-                           f'{sert_config[message.from_user.id]["event"]}'
+                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
+                           f'{sert_config[user_id]["event"]}'
                            'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
-    elif 'date' not in sert_config[message.from_user.id] and len(message.text.split(maxsplit=1)) == 2:
-        arr = message.text.split(maxsplit=1)
-        sert_config[message.from_user.id]['day'] = arr[0]
-        sert_config[message.from_user.id]['month_year'] = arr[1]
-        await send_message(message.from_user.id,
+    elif 'date' not in sert_config[user_id] and len(text.split(maxsplit=1)) == 2:
+        arr = text.split(maxsplit=1)
+        sert_config[user_id]['day'] = arr[0]
+        sert_config[user_id]['month_year'] = arr[1]
+        await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
-                           f'принял участие в {sert_config[message.from_user.id]["event_type"]}\n'
-                           f'{sert_config[message.from_user.id]["event"]}'
-                           f'дата выдачи   «{sert_config[message.from_user.id]["day"]}» '
-                           f'{sert_config[message.from_user.id]["month_year"]} г.')
-        await sertificate_generator(message.from_user.id)
-        admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
+                           f'{sert_config[user_id]["event"]}'
+                           f'дата выдачи   «{sert_config[user_id]["day"]}» '
+                           f'{sert_config[user_id]["month_year"]} г.')
+        await sertificate_generator(user_id)
+        admin = sql.Admin.get(sql.Admin.id == user_id)
         admin.step = 'None'
         admin.save()
-        sert_config.pop(sert_config[message.from_user.id])
+        sert_config.pop(sert_config[user_id])
+
+
+# others (only admin)
+@dp.message_handler(lambda message: sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
+async def switch(message: types.Message):
+    admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+    if admin.step == 'sert' and message.text:
+        await sert_questions(message.from_user.id, message.text)
 
 
 # error handler
