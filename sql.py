@@ -16,7 +16,7 @@ db = PostgresqlExtDatabase(database=url.path[1:],
 
 class Admin(Model):
     id = IntegerField(null=False, unique=True, primary_key=True)
-    step = CharField(null=False, max_length=10, default='None')
+    step = CharField(null=False, max_length=20)
 
     class Meta:
         primary_key = False

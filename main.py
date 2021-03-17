@@ -15,13 +15,20 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
 import sql
-from peewee import *
-
 
 bot = Bot(token=getenv('TG_TOKEN'))
 dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('broadcast')
+
+width, height = A4
+background = 'sert.png'
+fio = 'Иванов Иван Иванович'
+female = False
+event_type = 'семинаре'
+event = 'Первая региональная "Бла-бла"'
+month_year = 'января 2021'
+day = 31
 
 
 # safe sending message function
@@ -90,7 +97,7 @@ async def msg_switcher():
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     if sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists():
-        await send_message(message.from_user.id, 'You are admin!!')
+        await send_message(message.from_user.id, 'You are admin!')
     else:
         await send_message(message.from_user.id, 'Hi!')
 
@@ -100,17 +107,9 @@ async def start(message: types.Message):
     await send_message(84381379, f'{str(message.chat.id)} {message.chat.title}')
 
 
-@dp.message_handler(commands=['sert'])
+@dp.message_handler(lambda message: message.text[:5] == '/sert' and
+                                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def sert(message: types.Message):
-    width, height = A4
-    background = 'sert.png'
-    fio = 'Иванов Иван Иванович'
-    female = False
-    event_type = 'семинаре'
-    event = 'Первая региональная "Бла-бла"'
-    month_year = 'января 2021'
-    day = 31
-
     pdfmetrics.registerFont(TTFont('Liberation', 'Liberation.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
     c.setFont('Liberation', 18)
@@ -129,9 +128,12 @@ async def sert(message: types.Message):
     os.remove('sert.pdf')
 
 
-@dp.message_handler(commands=['sql'])
-async def cr_table(message: types.Message):
-    await sql.entry()
+@dp.message_handler(commands=['admin'])
+async def add_adm(message: types.Message):
+    text = message.text.split()[1:]
+    if text[0] == getenv('KEYWORD') and len(text) == 2 and type(text[1]) is int:
+        sql.Admin.create(id=int(text[1]), step='None')
+        await send_message(message.from_user.id, 'Success')
 
 
 # error handler
