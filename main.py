@@ -116,9 +116,9 @@ async def sert(message: types.Message):
 
 async def sertificate_generator(user_id):
     coord = 380
-    pdfmetrics.registerFont(TTFont('Liberation', 'Liberation.ttf', 'UTF-8'))
+    pdfmetrics.registerFont(TTFont('Font', 'font.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
-    c.setFont('Liberation', 18)
+    c.setFont('Font', 18)
     c.setTitle(sert_config[user_id]['fio'])
     c.drawImage(background, 0, 0, width=width, height=height)
     c.drawString(75, 520, "подтверждает, что ")
@@ -126,22 +126,10 @@ async def sertificate_generator(user_id):
     for line in sert_config[user_id]['event'].splitlines():
         c.drawString(75, coord, line)
         coord -= 30
-    '''
-    event = sert_config[user_id]['event']
-    while len(event):
-        if len(event) < 49:
-            c.drawString(75, coord, event)
-            event = ''
-        else:
-            space = event[:50].rfind(' ')
-            c.drawString(75, coord, event[:space])
-            event = event[space+1:]
-            coord -= 30
-    '''
     c.drawString(300, 290, f'дата выдачи   «{sert_config[user_id]["day"]}» {sert_config[user_id]["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
-    c.setFont('Liberation', 28)
+    c.setFont('Font', 28)
     c.drawString(75, 460, sert_config[user_id]['fio'])
     c.save()
     pdf = InputFile("sert.pdf", filename=f"{sert_config[user_id]['fio']}.pdf")
