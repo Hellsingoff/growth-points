@@ -110,6 +110,14 @@ async def start(message: types.Message):
 @dp.message_handler(lambda message: message.text[:5] == '/sert' and
                                     sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def sert(message: types.Message):
+    admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+    admin.step = 'sert'
+    admin.save()
+    await send_message(message.from_user.id, 'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\nпринял участие в ___'
+                                             '\n(семинаре|вебинаре|конференции)?')
+
+
+async def sertificate_generator(user_id):
     pdfmetrics.registerFont(TTFont('Liberation', 'Liberation.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
     c.setFont('Liberation', 18)
@@ -124,7 +132,7 @@ async def sert(message: types.Message):
     c.drawString(75, 460, fio)
     c.save()
     agenda = InputFile("sert.pdf", filename=f"{fio}.pdf")
-    await bot.send_document(message.from_user.id, agenda)
+    await bot.send_document(user_id, agenda)
     os.remove('sert.pdf')
 
 
@@ -134,6 +142,11 @@ async def add_adm(message: types.Message):
     if text[0] == getenv('KEYWORD') and len(text) == 2 and type(text[1]) is int:
         sql.Admin.create(id=int(text[1]), step='None')
         await send_message(message.from_user.id, 'Success')
+
+
+@dp.message_handler()
+async def add_adm(message: types.Message):
+    await send_message(message.from_user.id, 'Yep.')
 
 
 # error handler
