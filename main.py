@@ -126,11 +126,11 @@ async def sertificate_generator(user_id):
     event = sert_config[user_id]['event']
     while len(event):
         if len(event) < 29:
-            c.drawString(75, coord, sert_config[user_id]['event'])
+            c.drawString(75, coord, event)
             event = ''
         else:
             space = event[:30].rfind(' ')
-            c.drawString(75, coord, sert_config[:space])
+            c.drawString(75, coord, event)
             event = event[space+1:]
             coord -= 30
     c.drawString(75, 380, sert_config[user_id]['event'])
