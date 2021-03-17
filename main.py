@@ -123,6 +123,10 @@ async def sertificate_generator(user_id):
     c.drawImage(background, 0, 0, width=width, height=height)
     c.drawString(75, 520, "подтверждает, что ")
     c.drawString(75, 410, f"принял{'а' if female else ''} участие в {sert_config[user_id]['event_type']}")
+    for line in sert_config[user_id]['event'].splitlines():
+        c.drawString(75, coord, line)
+        coord -= 30
+    '''
     event = sert_config[user_id]['event']
     while len(event):
         if len(event) < 49:
@@ -133,6 +137,7 @@ async def sertificate_generator(user_id):
             c.drawString(75, coord, event[:space])
             event = event[space+1:]
             coord -= 30
+    '''
     c.drawString(300, 290, f'дата выдачи   «{sert_config[user_id]["day"]}» {sert_config[user_id]["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
@@ -160,7 +165,7 @@ async def sert_questions(user_id, text):
         await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           'Название мероприятия? (не забудьте склонение)')
+                           'Название мероприятия? (с переносами, не более 3 строк)')
     elif 'event' not in sert_config[user_id]:
         sert_config[user_id]['event'] = text
         await send_message(user_id,
