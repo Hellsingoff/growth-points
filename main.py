@@ -25,6 +25,34 @@ width, height = A4
 background = 'sert.png'
 female = False
 sert_config = {}
+alphabet = {'ё': 79, '1': 87, '2': 87, '3': 87, '4': 87, '5': 87,
+            '6': 88, '7': 87, '8': 88, '9': 87, '0': 87, '-': 58, '=': 98,
+            'й': 93, 'ц': 93, 'у': 88, 'к': 85, 'е': 77, 'н': 93,
+            'г': 72, 'ш': 132, 'щ': 133, 'з': 69, 'х': 87, 'ъ': 90, '\\': 48,
+            'ф': 114, 'ы': 116, 'в': 82, 'а': 77, 'п': 93, 'р': 87,
+            'о': 87, 'л': 87, 'д': 90, 'ж': 120, 'э': 74,
+            'я': 79, 'ч': 87, 'с': 77, 'м': 110, 'и': 93,
+            'т': 74, 'ь': 77, 'б': 88, 'ю': 130, '.': 45,
+            'Ё': 106, '!': 58, '"': 77, '№': 164, ';': 50, '%': 145, ':': 48,
+            '?': 77, '*': 87, '(': 58, ')': 58, '_': 88, '+': 98,
+            'Й': 124, 'Ц': 127, 'У': 122, 'К': 114, 'Е': 103, 'Н': 124,
+            'Г': 101, 'Ш': 175, 'Щ': 183, 'З': 89, 'Х': 125, 'Ъ': 122, '/': 48,
+            'Ф': 135, 'Ы': 151, 'В': 114, 'А': 124, 'П': 127, 'Р': 95,
+            'О': 124, 'Л': 119, 'Д': 119, 'Ж': 157, 'Э': 114,
+            'Я': 116, 'Ч': 114, 'С': 114, 'М': 154, 'И': 127,
+            'Т': 106, 'Ь': 101, 'Б': 101, 'Ю': 177, ',': 42,
+            'q': 79, 'w': 127, 'e': 77, 'r': 59, 't': 52, 'y': 88,
+            'u': 88, 'i': 46, 'o': 88, 'p': 88, '[': 58, ']': 58,
+            'a': 77, 's': 66, 'd': 88, 'f': 58, 'g': 85,
+            'h': 85, 'j': 48, 'k': 88, 'l': 50, '\'': 58,
+            'z': 74, 'x': 82, 'c': 74, 'v': 86, 'b': 86, 'n': 85, 'm': 134,
+            '~': 93, '<': 98, '>': 98, '«': 87, '»': 87, '–': 85,
+            '`': 58, '@': 159, '#': 87, '$': 87, '^': 82, '&': 135,
+            'Q': 124, 'W': 164, 'E': 106, 'R': 114, 'T': 106, 'Y': 127,
+            'U': 127, 'I': 58, 'O': 124, 'P': 98, '{': 85, '}': 82,
+            'A': 125, 'S': 95, 'D': 128, 'F': 95, 'G': 124, 'H': 127, 'J': 66, 'K': 125, 'L': 103,
+            'Z': 106, 'X': 125, 'C': 114, 'V': 127, 'B': 116, 'N': 125, 'M': 153, '|': 35, ' ': 46
+            }
 
 
 # safe sending message function
@@ -59,6 +87,31 @@ async def send_message(user_id: int, text: str) -> bool:
     return False
 
 
+async def text_splitter(text):
+    result = ''
+    length = 0
+    words = []
+    arr = text.split()
+    for word in arr:
+        len_word = 0
+        for char in word:
+            if char in alphabet:
+                len_word += alphabet[char]
+            else:
+                len_word += 185
+        if len_word <= 4750:
+            words.append([len_word, word])
+    while len(words):
+        if length + words[0][0] <= 4750:
+            result += (words[0][1] + ' ')
+            length += words[0][0]
+            del words[0]
+        else:
+            result += '\n'
+            length = 0
+    return result
+
+
 async def msg_switcher():
     ban = ChatPermissions(can_send_messages=False,
                           can_send_media_messages=False,
@@ -78,7 +131,7 @@ async def msg_switcher():
                            can_pin_messages=False)
     while True:
         time = 6 < (dt.now().time().hour + 5) % 24 < 19 and dt.now().weekday() < 5
-        for chat_id in (-1001152994794, -1001186536726, -1001139317566, -1001163179007):
+        for chat_id in (-1001152994794, -1001186536726, -1001139317566, -1001163179007, -1001498465356):
             chat = await bot.get_chat(chat_id)
             msg_perm = chat.permissions.can_send_messages
             if msg_perm and not time:
@@ -153,21 +206,9 @@ async def sert_questions(user_id, text):
         await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           'Название мероприятия? (с переносами, не более 3 строк)')
-    elif 'event' not in sert_config[user_id] and 'day' in sert_config[user_id]:
-        sert_config[user_id]['event'] = text
-        await send_message(user_id,
-                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
-                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           f'{sert_config[user_id]["event"]}'
-                           f'дата выдачи   «{sert_config[user_id]["day"]}» '
-                           f'{sert_config[user_id]["month_year"]} г.')
-        await sertificate_generator(user_id)
-        await send_message(user_id, 'Если файл выглядит верно - напишите "Проверено".'
-                           'Если необходимо переделать данные - напишите "Отмена".'
-                           'Изменить переносы в названии мероприятия - "-".')
+                           'Название мероприятия?')
     elif 'event' not in sert_config[user_id]:
-        sert_config[user_id]['event'] = text
+        sert_config[user_id]['event'] = text_splitter(text)
         await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
@@ -182,22 +223,19 @@ async def sert_questions(user_id, text):
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
                            f'{sert_config[user_id]["event"]}'
                            f'дата выдачи   «{sert_config[user_id]["day"]}» '
-                           f'{sert_config[user_id]["month_year"]} г.'
-                           'Если файл выглядит верно - напишите "Проверено".'
-                           'Если необходимо переделать данные - напишите "Отмена".'
-                           'Изменить переносы в названии мероприятия - "-".')
+                           f'{sert_config[user_id]["month_year"]} г.\n'
+                           'Если файл выглядит верно - напишите "Проверено".\n'
+                           'Если необходимо переделать данные - напишите "Отмена".\n')
         await sertificate_generator(user_id)
     elif 'day' in sert_config[user_id]:
         if text == 'Проверено':
             admin = sql.Admin.get(sql.Admin.id == user_id)
-            admin.step = 'file'
+            # admin.step = 'file'
             admin.save()
+            await send_message(user_id, 'Отправьте .csv файл со списком для рассылки.')
         elif text == 'Отмена':
             sert_config.pop(user_id)
             await send_message(user_id, 'Отменено')
-        elif text == '-':
-            sert_config[user_id].pop('event')
-            await send_message(user_id, 'Название мероприятия? (с переносами, не более 3 строк)')
 
 
 # others (only admin)
