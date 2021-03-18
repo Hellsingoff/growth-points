@@ -231,6 +231,7 @@ async def sert_questions(user_id, text):
         if text == 'Проверено':
             admin = sql.Admin.get(sql.Admin.id == user_id)
             # admin.step = 'file'
+            admin.step = 'None'
             admin.save()
             await send_message(user_id, 'Отправьте .csv файл со списком для рассылки.')
         elif text == 'Отмена':
