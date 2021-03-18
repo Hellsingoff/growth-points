@@ -208,7 +208,7 @@ async def sert_questions(user_id, text):
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
                            'Название мероприятия?')
     elif 'event' not in sert_config[user_id]:
-        sert_config[user_id]['event'] = text_splitter(text)
+        sert_config[user_id]['event'] = await text_splitter(text)
         await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
@@ -234,6 +234,9 @@ async def sert_questions(user_id, text):
             admin.save()
             await send_message(user_id, 'Отправьте .csv файл со списком для рассылки.')
         elif text == 'Отмена':
+            admin = sql.Admin.get(sql.Admin.id == user_id)
+            admin.step = 'None'
+            admin.save()
             sert_config.pop(user_id)
             await send_message(user_id, 'Отменено')
 
