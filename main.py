@@ -250,7 +250,7 @@ async def switch(message: types.Message):
         await sert_questions(message.from_user.id, message.text)
     # elif admin.step == 'file' and message.document:
     elif message.document:
-        await send_message(message.from_user.id, message.document.file_unique_id)
+        await send_message(message.from_user.id, f'check {message.document.file_unique_id}')
 
 
 @dp.message_handler(content_types=['document'])
