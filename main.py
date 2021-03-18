@@ -249,7 +249,7 @@ async def switch(message: types.Message):
     if admin.step == 'sert' and message.text:
         await sert_questions(message.from_user.id, message.text)
     # elif admin.step == 'file' and message.document:
-    elif message.document:
+    elif message.document.file_size:
         await send_message(message.from_user.id, f'check {message.document.file_unique_id}')
 
 
