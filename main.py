@@ -221,9 +221,9 @@ async def sert_questions(user_id, text):
         await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           f'{sert_config[user_id]["event"]}'
+                           f'{sert_config[user_id]["event"]}\n'
                            f'дата выдачи   «{sert_config[user_id]["day"]}» '
-                           f'{sert_config[user_id]["month_year"]} г.\n'
+                           f'{sert_config[user_id]["month_year"]} г.\n\n'
                            'Если файл выглядит верно - напишите "Проверено".\n'
                            'Если необходимо переделать данные - напишите "Отмена".\n')
         await sertificate_generator(user_id)
@@ -248,6 +248,9 @@ async def switch(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     if admin.step == 'sert' and message.text:
         await sert_questions(message.from_user.id, message.text)
+    # elif admin.step == 'file' and message.document:
+    elif message.document:
+        await send_message(message.from_user.id, message.document.file_unique_id)
 
 
 @dp.message_handler(content_types=['document'])
