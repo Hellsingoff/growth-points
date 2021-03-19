@@ -171,7 +171,7 @@ async def sertificate_generator(user_id, fio, mail=True):
     pdfmetrics.registerFont(TTFont('Font', 'font.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
     c.setFont('Font', 18)
-    c.setTitle(sert_config[user_id]['fio'])
+    c.setTitle(fio)
     c.drawImage(background, 0, 0, width=width, height=height)
     c.drawString(75, 520, "подтверждает, что ")
     c.drawString(75, 410, f"принял{'а' if female else ''} участие в {sert_config[user_id]['event_type']}")
