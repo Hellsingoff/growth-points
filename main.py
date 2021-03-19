@@ -246,7 +246,6 @@ async def sert_questions(user_id, text):
 # others (only admin)
 @dp.message_handler(lambda message: sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def switch(message: types.Message):
-    await send_message(message.from_user.id, f'check {message.document.file_unique_id}')
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     if admin.step == 'sert' and message.text:
         await sert_questions(message.from_user.id, message.text)
