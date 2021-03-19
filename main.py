@@ -211,7 +211,7 @@ async def sert_questions(user_id, text):
         await send_message(user_id,
                            'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                            f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           f'{sert_config[user_id]["event"]}'
+                           f'{sert_config[user_id]["event"]}\n'
                            'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
     elif 'day' not in sert_config[user_id] and len(text.split(maxsplit=1)) == 2:
         arr = text.split(maxsplit=1)
