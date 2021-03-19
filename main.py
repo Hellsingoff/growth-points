@@ -137,10 +137,8 @@ async def msg_switcher():
             msg_perm = chat.permissions.can_send_messages
             if msg_perm and not time:
                 await bot.set_chat_permissions(chat_id, permissions=ban)
-                await send_message(84381379, f'{chat_id} ban')
             elif not msg_perm and time:
                 await bot.set_chat_permissions(chat_id, permissions=free)
-                await send_message(84381379, f'{chat_id} free')
         await sleep(30)
 
 
@@ -163,12 +161,12 @@ async def sert(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     admin.step = 'sert'
     admin.save()
-    sert_config[message.from_user.id] = {'fio': 'Иванов Иван Иванович'}
+    sert_config[message.from_user.id] = {}
     await send_message(message.from_user.id, 'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\nпринял участие в ___'
                                              '\n(семинаре|вебинаре|конференции)?')
 
 
-async def sertificate_generator(user_id):
+async def sertificate_generator(user_id, fio, mail=True):
     coord = 380
     pdfmetrics.registerFont(TTFont('Font', 'font.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
@@ -186,7 +184,7 @@ async def sertificate_generator(user_id):
     c.setFont('Font', 28)
     c.drawString(75, 460, sert_config[user_id]['fio'])
     c.save()
-    pdf = InputFile("sert.pdf", filename=f"{sert_config[user_id]['fio']}.pdf")
+    pdf = InputFile("sert.pdf", filename=f"{fio}.pdf")
     await bot.send_document(user_id, pdf)
     os.remove('sert.pdf')
 
@@ -227,7 +225,7 @@ async def sert_questions(user_id, text):
                            f'{sert_config[user_id]["month_year"]} г.\n\n'
                            'Если файл выглядит верно - напишите "Проверено".\n'
                            'Если необходимо переделать данные - напишите "Отмена".\n')
-        await sertificate_generator(user_id)
+        await sertificate_generator(user_id, 'Иванов Иван Иванович', mail=False)
     elif 'day' in sert_config[user_id]:
         if text == 'Проверено':
             admin = sql.Admin.get(sql.Admin.id == user_id)
@@ -238,7 +236,8 @@ async def sert_questions(user_id, text):
         admin = sql.Admin.get(sql.Admin.id == user_id)
         admin.step = 'None'
         admin.save()
-        sert_config.pop(user_id)
+        if user_id in sert_config:
+            sert_config.pop(user_id)
         await send_message(user_id, 'Отменено')
 
 
@@ -260,9 +259,9 @@ async def file(message: types.Message):
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "list.csv")
         with open('list.csv') as File:
-            reader = csv.reader(File, delimiter=',', quotechar=',', quoting=csv.QUOTE_MINIMAL)
+            reader = csv.reader(File, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
-                await send_message(message.from_user.id, str(row))
+                await sertificate_generator(message.from_user.id, row)
 
 
 # error handler
