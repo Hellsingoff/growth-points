@@ -231,16 +231,15 @@ async def sert_questions(user_id, text):
     elif 'day' in sert_config[user_id]:
         if text == 'Проверено':
             admin = sql.Admin.get(sql.Admin.id == user_id)
-            # admin.step = 'file'
-            admin.step = 'None'
+            admin.step = 'file'
             admin.save()
             await send_message(user_id, 'Отправьте .csv файл со списком для рассылки.')
-        elif text == 'Отмена':
-            admin = sql.Admin.get(sql.Admin.id == user_id)
-            admin.step = 'None'
-            admin.save()
-            sert_config.pop(user_id)
-            await send_message(user_id, 'Отменено')
+    elif text == 'Отмена':
+        admin = sql.Admin.get(sql.Admin.id == user_id)
+        admin.step = 'None'
+        admin.save()
+        sert_config.pop(user_id)
+        await send_message(user_id, 'Отменено')
 
 
 # others (only admin)
