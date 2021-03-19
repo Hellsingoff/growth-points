@@ -261,7 +261,7 @@ async def file(message: types.Message):
         with open('list.csv') as File:
             reader = csv.reader(File, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
-                await sertificate_generator(message.from_user.id, row)
+                await sertificate_generator(message.from_user.id, row[0])
         sert_config.pop(message.from_user.id)
 
 
