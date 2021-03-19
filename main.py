@@ -182,7 +182,7 @@ async def sertificate_generator(user_id, fio, mail=True):
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
     c.setFont('Font', 28)
-    c.drawString(75, 460, sert_config[user_id]['fio'])
+    c.drawString(75, 460, fio)
     c.save()
     pdf = InputFile("sert.pdf", filename=f"{fio}.pdf")
     await bot.send_document(user_id, pdf)
