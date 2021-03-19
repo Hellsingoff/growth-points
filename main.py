@@ -1,3 +1,4 @@
+import csv
 import os
 from os import getenv
 from datetime import datetime as dt
@@ -249,14 +250,21 @@ async def switch(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     if admin.step == 'sert' and message.text:
         await sert_questions(message.from_user.id, message.text)
-    # elif admin.step == 'file' and message.document:
-    elif message.document.file_size:
-        await send_message(message.from_user.id, f'check {message.document.file_unique_id}')
 
 
-@dp.message_handler(content_types=['document'])
+@dp.message_handler(lambda message: sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists(),
+                    content_types=['document'])
 async def file(message: types.Message):
-    await send_message(message.from_user.id, message.document.file_unique_id)
+    admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+    if admin.step == 'file' and message.document.file_name[-4:] == '.csv':
+        admin.step = 'None'
+        admin.save()
+        file_csv = await bot.get_file(message.document.file_id)
+        await bot.download_file(file_csv.file_path, "list.csv")
+        with open('list.csv') as File:
+            reader = csv.reader(File, delimiter=',', quotechar=',', quoting=csv.QUOTE_MINIMAL)
+            for row in reader:
+                await send_message(message.from_user.id, str(row))
 
 
 # error handler
