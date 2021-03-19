@@ -262,6 +262,7 @@ async def file(message: types.Message):
             reader = csv.reader(File, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
                 await sertificate_generator(message.from_user.id, row)
+        sert_config.pop(message.from_user.id)
 
 
 # error handler
