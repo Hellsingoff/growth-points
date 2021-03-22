@@ -1,3 +1,4 @@
+import codecs
 import csv
 import os
 from os import getenv
@@ -261,7 +262,7 @@ async def file(message: types.Message):
         admin.save()
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "list.csv")
-        with open('list.csv') as csv_file:
+        with codecs.open('list.csv', "r", encoding="utf_8") as csv_file:
             reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
                 sql.Mail.create(name=row[0],
