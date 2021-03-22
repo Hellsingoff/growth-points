@@ -2,6 +2,10 @@ import codecs
 import csv
 import os
 import re
+import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
 from os import getenv
 from datetime import datetime as dt
 
@@ -24,6 +28,7 @@ dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('broadcast')
 
+mailserver = smtplib.SMTP('smtp.office365.com', 587)
 pattern = re.compile('[^а-яА-Я ]')
 width, height = A4
 background = 'sert.png'
@@ -174,7 +179,7 @@ async def sert(message: types.Message):
 async def sertificate_generator(config):
     coord = 380
     pdfmetrics.registerFont(TTFont('Font', 'font.ttf', 'UTF-8'))
-    c = canvas.Canvas("sert.pdf", pagesize=A4)
+    c = canvas.Canvas(f"{config['fio']}.pdf", pagesize=A4)
     c.setFont('Font', 18)
     c.setTitle(config['fio'])
     c.drawImage(background, 0, 0, width=width, height=height)
@@ -190,12 +195,29 @@ async def sertificate_generator(config):
     c.setFont('Font', 28)
     c.drawString(75, 460, config['fio'])
     c.save()
-    pdf = InputFile("sert.pdf", filename=f"{config['fio']}.pdf")
+    pdf = InputFile(f"{config['fio']}.pdf")
     if config['mail']:
-        # send mail
-        await send_message(config['chat_id'], f'mail send to {config["mail"]}')
+        msg = MIMEMultipart()
+        msg['From'] = getenv('VSH_MAIL')
+        msg['To'] = config['mail']
+        msg['Subject'] = 'Сертификат'
+        with open(f"{config['fio']}.pdf", "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header(
+            "Content-Disposition",
+            f"attachment; filename={config['fio']}.pdf",
+        )
+        msg.attach(part)
+        text = msg.as_string()
+        mailserver.ehlo()
+        mailserver.starttls()
+        mailserver.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
+        mailserver.sendmail(getenv('VSH_MAIL'), config['mail'], text)
+        mailserver.quit()
     await bot.send_document(config['chat_id'], pdf, caption=config['fio'])
-    os.remove('sert.pdf')
+    os.remove(f"{config['fio']}.pdf")
 
 
 # adding a new admin
@@ -227,7 +249,9 @@ async def sert_questions(message):
                             f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
                             f'{sert_config[message.chat.id]["event"]}\n'
                             'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
-    elif 'day' not in sert_config[message.chat.id] and len(arr := message.text.split(maxsplit=1)) == 2 and arr[0].isdigit():
+    elif 'day' not in sert_config[message.chat.id] and \
+            len(arr := message.text.split(maxsplit=1)) == 2 and \
+            arr[0].isdigit():
         sert_config[message.chat.id]['day'] = arr[0]
         sert_config[message.chat.id]['month_year'] = arr[1]
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
@@ -266,13 +290,14 @@ async def file(message: types.Message):
         with codecs.open('list.csv', "r", encoding="utf_8") as csv_file:
             reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
-                sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
-                                mail=re.sub(pattern, '', row[1].strip()),
-                                event_type=sert_config[message.chat.id]['event_type'],
-                                event=sert_config[message.chat.id]['event'],
-                                day=sert_config[message.chat.id]['day'],
-                                month_year=sert_config[message.chat.id]['month_year'],
-                                chat_id=message.chat.id)
+                if len(row) == 2:
+                    sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
+                                    mail=re.sub(pattern, '', row[1].strip()),
+                                    event_type=sert_config[message.chat.id]['event_type'],
+                                    event=sert_config[message.chat.id]['event'],
+                                    day=sert_config[message.chat.id]['day'],
+                                    month_year=sert_config[message.chat.id]['month_year'],
+                                    chat_id=message.chat.id)
         sert_config.pop(message.chat.id)
         await sert_sender()
 
