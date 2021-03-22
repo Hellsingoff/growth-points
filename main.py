@@ -200,7 +200,7 @@ async def sertificate_generator(config):
         m.subject = 'Сертификат'
         m.body = "George Best quote: I've stopped drinking, but only while I'm asleep."
         att = BaseAttachment(attachment=f"{config['fio']}.pdf")
-        m.attachments.append(att)
+        att.attach(m)
         m.send()
         '''
         mailserver.ehlo()
