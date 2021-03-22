@@ -1,6 +1,7 @@
 import codecs
 import csv
 import os
+import re
 from os import getenv
 from datetime import datetime as dt
 
@@ -23,6 +24,7 @@ dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('broadcast')
 
+pattern = re.compile('[^а-яА-Я]')
 width, height = A4
 background = 'sert.png'
 female = False
@@ -215,18 +217,18 @@ async def sert_questions(message):
             sert_config.pop(message.chat.id)
         await message.reply('Отменено')
     elif 'event_type' not in sert_config[message.chat.id]:
-        sert_config[message.chat.id]['event_type'] = message.text
+        sert_config[message.chat.id]['event_type'] = message.text.strip()
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                             f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
                             'Название мероприятия?')
     elif 'event' not in sert_config[message.chat.id]:
-        sert_config[message.chat.id]['event'] = await text_splitter(message.text)
+        sert_config[message.chat.id]['event'] = await text_splitter(message.text.strip())
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                             f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
                             f'{sert_config[message.chat.id]["event"]}\n'
                             'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
     elif 'day' not in sert_config[message.chat.id] and len(message.text.split(maxsplit=1)) == 2:
-        arr = message.text.split(maxsplit=1)
+        arr = message.text.strip().split(maxsplit=1)
         sert_config[message.chat.id]['day'] = arr[0]
         sert_config[message.chat.id]['month_year'] = arr[1]
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
@@ -238,7 +240,7 @@ async def sert_questions(message):
                             'Если необходимо переделать данные - напишите "Отмена".\n')
         await sertificate_generator(sert_config[message.chat.id])
     elif 'day' in sert_config[message.chat.id]:
-        if message.text == 'Проверено':
+        if message.text.strip() == 'Проверено':
             admin = sql.Admin.get(sql.Admin.id == message.chat.id)
             admin.step = 'file'
             admin.save()
@@ -265,8 +267,8 @@ async def file(message: types.Message):
         with codecs.open('list.csv', "r", encoding="utf_8") as csv_file:
             reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
-                sql.Mail.create(name=row[0].strip(),
-                                mail=row[1].strip(),
+                sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
+                                mail=re.sub(pattern, '', row[1].strip()),
                                 event_type=sert_config[message.chat.id]['event_type'],
                                 event=sert_config[message.chat.id]['event'],
                                 day=sert_config[message.chat.id]['day'],
