@@ -5,7 +5,8 @@ import re
 from os import getenv
 from datetime import datetime as dt
 
-from O365 import Account, Attachment
+from O365 import Account
+from O365.utils.attachment import BaseAttachment
 from aiogram.types.input_file import InputFile
 from aiogram import Bot, Dispatcher, executor, types, exceptions
 from aiogram.types import ChatPermissions
@@ -198,7 +199,7 @@ async def sertificate_generator(config):
         m.to.add(config['mail'])
         m.subject = 'Сертификат'
         m.body = "George Best quote: I've stopped drinking, but only while I'm asleep."
-        att = Attachment(path=f"{config['fio']}.pdf")
+        att = BaseAttachment(path=f"{config['fio']}.pdf")
         m.attachments.append(att)
         m.send()
         '''
