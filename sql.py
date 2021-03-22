@@ -19,7 +19,20 @@ class Admin(Model):
     step = CharField(null=False, max_length=20)
 
     class Meta:
-        primary_key = False
         database = db
         db_table = 'admins'
 
+
+class Mail(Model):
+    id = BigAutoField(primary_key=True)
+    name = CharField(null=False, max_length=100)
+    mail = CharField(null=False, max_length=50)
+    event_type = CharField(null=False, max_length=50)
+    event = CharField(null=False, max_length=300)
+    day = SmallIntegerField(null=False)
+    month_year = CharField(null=False, max_length=20)
+    chat_id = IntegerField(null=False)
+
+    class Meta:
+        database = db
+        db_table = 'queue'
