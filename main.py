@@ -261,11 +261,11 @@ async def file(message: types.Message):
         admin.save()
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "list.csv")
-        with open('list.csv') as File:
-            reader = csv.reader(File, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        with open('list.csv') as csv_file:
+            reader = csv.reader(csv_file, dialect=csv.excel, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
-                sql.Mail.create(name=row[0],
-                                mail=row[1],
+                sql.Mail.create(name=row[0].encode('utf8'),
+                                mail=row[1].encode('utf8'),
                                 event_type=sert_config[message.chat.id]['event_type'],
                                 event=sert_config[message.chat.id]['event'],
                                 day=sert_config[message.chat.id]['day'],
@@ -291,6 +291,7 @@ async def sert_sender():
                   'mail': mail.mail,
                   'chat_id': mail.chat_id}
         await sertificate_generator(config)
+        mail.delete_instance()
 
 
 if __name__ == '__main__':
