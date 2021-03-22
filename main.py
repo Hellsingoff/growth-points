@@ -196,6 +196,7 @@ async def sertificate_generator(config):
     c.drawString(75, 460, config['fio'])
     c.save()
     pdf = InputFile(f"{config['fio']}.pdf")
+    await send_message(config['chat_id'], config['mail'])
     if config['mail']:
         await send_message(config['chat_id'], 'test')
         msg = MIMEMultipart()
