@@ -162,7 +162,8 @@ async def sert(message: types.Message):
     admin.step = 'sert'
     admin.save()
     sert_config[message.chat.id] = {'fio': 'Иванов Иван Иванович',
-                                    'mail': False}
+                                    'mail': False,
+                                    'chat_id': message.chat.id}
     await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\nпринял участие в ___'
                         '\n(семинаре|вебинаре|конференции)?')
 
