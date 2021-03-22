@@ -265,8 +265,8 @@ async def file(message: types.Message):
         with codecs.open('list.csv', "r", encoding="utf_8") as csv_file:
             reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
-                sql.Mail.create(name=row[0],
-                                mail=row[1],
+                sql.Mail.create(name=row[0].strip(),
+                                mail=row[1].strip(),
                                 event_type=sert_config[message.chat.id]['event_type'],
                                 event=sert_config[message.chat.id]['event'],
                                 day=sert_config[message.chat.id]['day'],
