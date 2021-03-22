@@ -199,7 +199,6 @@ async def sertificate_generator(config):
     pdf = InputFile(f"{config['fio']}.pdf")
     if config['mail']:
         mailserver.ehlo()
-        mailserver.starttls()
         mailserver.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
         msg = MIMEMultipart()
         msg['From'] = getenv('VSH_MAIL')
