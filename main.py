@@ -4,7 +4,7 @@ from os import getenv
 from datetime import datetime as dt
 
 from aiogram.types.input_file import InputFile
-from aiogram import Bot, Dispatcher, executor, types, exceptions
+from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ChatPermissions
 import asyncio
 from asyncio import sleep
@@ -54,38 +54,6 @@ alphabet = {'ё': 79, '1': 87, '2': 87, '3': 87, '4': 87, '5': 87,
             'A': 125, 'S': 95, 'D': 128, 'F': 95, 'G': 124, 'H': 127, 'J': 66, 'K': 125, 'L': 103,
             'Z': 106, 'X': 125, 'C': 114, 'V': 127, 'B': 116, 'N': 125, 'M': 153, '|': 35, ' ': 46
             }
-
-
-# safe sending message function
-async def send_message(user_id: int, text: str) -> bool:
-    try:
-        await bot.send_message(user_id, text)
-    except exceptions.BotBlocked:
-        log.exception(f'Target [ID:{user_id}]: blocked by user')
-    except exceptions.ChatNotFound:
-        log.exception(f'Target [ID:{user_id}]: invalid user ID')
-    except exceptions.RetryAfter as e:
-        log.exception(f'Target [ID:{user_id}]: Flood limit is exceeded.' +
-                      f'Sleep {e.timeout} seconds.')
-        await sleep(e.timeout)
-        return await send_message(user_id, text)
-    except exceptions.UserDeactivated:
-        log.exception(f'Target [ID:{user_id}]: user is deactivated')
-    except exceptions.MessageIsTooLong:
-        log.exception(f'Target [ID:{user_id}]: msg len {len(text)}')
-        start_char = 0
-        while start_char <= len(text):
-            await send_message(user_id, text[start_char:start_char + 4096])
-            start_char += 4096
-    except exceptions.NetworkError:
-        log.exception(f'Target [ID:{user_id}]: NetworkError')
-        await sleep(1)
-        return await send_message(user_id, text[:4096])
-    except exceptions.TelegramAPIError:
-        log.exception(f'Target [ID:{user_id}]: failed')
-    else:
-        return True
-    return False
 
 
 async def text_splitter(text):
@@ -145,14 +113,14 @@ async def msg_switcher():
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     if sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists():
-        await send_message(message.from_user.id, 'You are admin!')
+        await message.reply('Вы администратор!')
     else:
-        await send_message(message.from_user.id, 'Hi!')
+        await message.reply('Привет.')
 
 
 @dp.message_handler(commands=['id'])
 async def start(message: types.Message):
-    await send_message(84381379, f'{str(message.chat.id)} {message.chat.title}')
+    await message.reply(f'{str(message.chat.id)}')
 
 
 @dp.message_handler(lambda message: message.text[:5] == '/sert' and
@@ -161,12 +129,12 @@ async def sert(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     admin.step = 'sert'
     admin.save()
-    sert_config[message.from_user.id] = {}
-    await send_message(message.from_user.id, 'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\nпринял участие в ___'
-                                             '\n(семинаре|вебинаре|конференции)?')
+    sert_config[message.chat.id] = {}
+    await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\nпринял участие в ___'
+                        '\n(семинаре|вебинаре|конференции)?')
 
 
-async def sertificate_generator(user_id, fio, mail=True):
+async def sertificate_generator(message, fio, mail=False):
     coord = 380
     pdfmetrics.registerFont(TTFont('Font', 'font.ttf', 'UTF-8'))
     c = canvas.Canvas("sert.pdf", pagesize=A4)
@@ -174,18 +142,22 @@ async def sertificate_generator(user_id, fio, mail=True):
     c.setTitle(fio)
     c.drawImage(background, 0, 0, width=width, height=height)
     c.drawString(75, 520, "подтверждает, что ")
-    c.drawString(75, 410, f"принял{'а' if female else ''} участие в {sert_config[user_id]['event_type']}")
-    for line in sert_config[user_id]['event'].splitlines():
+    c.drawString(75, 410, f"принял(а) участие в {sert_config[message.chat.id]['event_type']}")
+    for line in sert_config[message.chat.id]['event'].splitlines():
         c.drawString(75, coord, line)
         coord -= 30
-    c.drawString(300, 290, f'дата выдачи   «{sert_config[user_id]["day"]}» {sert_config[user_id]["month_year"]} г.')
+    c.drawString(300, 290, f'дата выдачи   «{sert_config[message.chat.id]["day"]}» '
+                           f'{sert_config[message.chat.id]["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
     c.setFont('Font', 28)
     c.drawString(75, 460, fio)
     c.save()
     pdf = InputFile("sert.pdf", filename=f"{fio}.pdf")
-    await bot.send_document(user_id, pdf)
+    if mail:
+        # send mail
+        mail
+    await bot.send_document(message.chat.id, pdf, caption=fio)
     os.remove('sert.pdf')
 
 
@@ -195,50 +167,47 @@ async def add_adm(message: types.Message):
     text = message.text.split()[1:]
     if text[0] == getenv('KEYWORD') and len(text) == 2 and text[1].isdigit():
         sql.Admin.create(id=int(text[1]), step='None')
-        await send_message(message.from_user.id, 'Success')
+        await message.reply('Success')
 
 
 # others (only admin)
-async def sert_questions(user_id, text):
-    if 'event_type' not in sert_config[user_id]:
-        sert_config[user_id]['event_type'] = text
-        await send_message(user_id,
-                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
-                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           'Название мероприятия?')
-    elif 'event' not in sert_config[user_id]:
-        sert_config[user_id]['event'] = await text_splitter(text)
-        await send_message(user_id,
-                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
-                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           f'{sert_config[user_id]["event"]}\n'
-                           'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
-    elif 'day' not in sert_config[user_id] and len(text.split(maxsplit=1)) == 2:
-        arr = text.split(maxsplit=1)
-        sert_config[user_id]['day'] = arr[0]
-        sert_config[user_id]['month_year'] = arr[1]
-        await send_message(user_id,
-                           'СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
-                           f'принял участие в {sert_config[user_id]["event_type"]}\n'
-                           f'{sert_config[user_id]["event"]}\n'
-                           f'дата выдачи   «{sert_config[user_id]["day"]}» '
-                           f'{sert_config[user_id]["month_year"]} г.\n\n'
-                           'Если файл выглядит верно - напишите "Проверено".\n'
-                           'Если необходимо переделать данные - напишите "Отмена".\n')
-        await sertificate_generator(user_id, 'Иванов Иван Иванович', mail=False)
-    elif 'day' in sert_config[user_id]:
-        if text == 'Проверено':
-            admin = sql.Admin.get(sql.Admin.id == user_id)
-            admin.step = 'file'
-            admin.save()
-            await send_message(user_id, 'Отправьте .csv файл со списком для рассылки.')
-    elif text == 'Отмена':
-        admin = sql.Admin.get(sql.Admin.id == user_id)
+async def sert_questions(message):
+    if message.text == 'Отмена':
+        admin = sql.Admin.get(sql.Admin.id == message.chat.id)
         admin.step = 'None'
         admin.save()
-        if user_id in sert_config:
-            sert_config.pop(user_id)
-        await send_message(user_id, 'Отменено')
+        if message.chat.id in sert_config:
+            sert_config.pop(message.chat.id)
+        await message.reply('Отменено')
+    elif 'event_type' not in sert_config[message.chat.id]:
+        sert_config[message.chat.id]['event_type'] = message.text
+        await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
+                            f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
+                            'Название мероприятия?')
+    elif 'event' not in sert_config[message.chat.id]:
+        sert_config[message.chat.id]['event'] = await text_splitter(message.text)
+        await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
+                            f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
+                            f'{sert_config[message.chat.id]["event"]}\n'
+                            'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
+    elif 'day' not in sert_config[message.chat.id] and len(message.text.split(maxsplit=1)) == 2:
+        arr = message.text.split(maxsplit=1)
+        sert_config[message.chat.id]['day'] = arr[0]
+        sert_config[message.chat.id]['month_year'] = arr[1]
+        await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
+                            f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
+                            f'{sert_config[message.chat.id]["event"]}\n'
+                            f'дата выдачи   «{sert_config[message.chat.id]["day"]}» '
+                            f'{sert_config[message.chat.id]["month_year"]} г.\n\n'
+                            'Если файл выглядит верно - напишите "Проверено".\n'
+                            'Если необходимо переделать данные - напишите "Отмена".\n')
+        await sertificate_generator(message, 'Иванов Иван Иванович', mail=False)
+    elif 'day' in sert_config[message.chat.id]:
+        if message.text == 'Проверено':
+            admin = sql.Admin.get(sql.Admin.id == message.chat.id)
+            admin.step = 'file'
+            admin.save()
+            await message.reply('Отправьте .csv файл со списком для рассылки.')
 
 
 # others (only admin)
@@ -246,7 +215,7 @@ async def sert_questions(user_id, text):
 async def switch(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     if admin.step == 'sert' and message.text:
-        await sert_questions(message.from_user.id, message.text)
+        await sert_questions(message)
 
 
 @dp.message_handler(lambda message: sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists(),
@@ -261,8 +230,8 @@ async def file(message: types.Message):
         with open('list.csv') as File:
             reader = csv.reader(File, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for row in reader:
-                await sertificate_generator(message.from_user.id, row[0])
-        sert_config.pop(message.from_user.id)
+                await sertificate_generator(message.chat.id, row[0])
+        sert_config.pop(message.chat.id)
 
 
 # error handler
