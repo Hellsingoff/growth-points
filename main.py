@@ -198,6 +198,9 @@ async def sertificate_generator(config):
     c.save()
     pdf = InputFile(f"{config['fio']}.pdf")
     if config['mail']:
+        mailserver.ehlo()
+        mailserver.starttls()
+        mailserver.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
         msg = MIMEMultipart()
         msg['From'] = getenv('VSH_MAIL')
         msg['To'] = config['mail']
@@ -218,9 +221,6 @@ async def sertificate_generator(config):
         )
         msg.attach(part)
         text = msg.as_string()
-        mailserver.ehlo()
-        mailserver.starttls()
-        mailserver.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
         mailserver.sendmail(getenv('VSH_MAIL'), config['mail'], text)
         '''
     await bot.send_document(config['chat_id'], pdf, caption=config['fio'])
