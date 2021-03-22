@@ -24,7 +24,7 @@ dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('broadcast')
 
-pattern = re.compile('[^а-яА-Я] ')
+pattern = re.compile('[^а-яА-Я ]')
 width, height = A4
 background = 'sert.png'
 female = False
@@ -227,8 +227,7 @@ async def sert_questions(message):
                             f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
                             f'{sert_config[message.chat.id]["event"]}\n'
                             'дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
-    elif 'day' not in sert_config[message.chat.id] and len(message.text.split(maxsplit=1)) == 2:
-        arr = message.text.strip().split(maxsplit=1)
+    elif 'day' not in sert_config[message.chat.id] and len(arr := message.text.split(maxsplit=1)) == 2 and arr[0].isdigit():
         sert_config[message.chat.id]['day'] = arr[0]
         sert_config[message.chat.id]['month_year'] = arr[1]
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
