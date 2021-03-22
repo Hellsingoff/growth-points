@@ -295,7 +295,7 @@ async def file(message: types.Message):
             for row in reader:
                 if len(row) == 2:
                     sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
-                                    mail=re.sub(pattern, '', row[1].strip()),
+                                    mail=row[1].strip(),
                                     event_type=sert_config[message.chat.id]['event_type'],
                                     event=sert_config[message.chat.id]['event'],
                                     day=sert_config[message.chat.id]['day'],
