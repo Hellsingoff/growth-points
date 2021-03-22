@@ -2,14 +2,10 @@ import codecs
 import csv
 import os
 import re
-import smtplib
-from email import encoders
-from email.mime.application import MIMEApplication
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
 from os import getenv
 from datetime import datetime as dt
 
+from O365 import Account, Attachment
 from aiogram.types.input_file import InputFile
 from aiogram import Bot, Dispatcher, executor, types, exceptions
 from aiogram.types import ChatPermissions
@@ -29,7 +25,6 @@ dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('broadcast')
 
-mailserver = smtplib.SMTP('smtp.office365.com', 587)
 pattern = re.compile('[^а-яА-Я ]')
 width, height = A4
 background = 'sert.png'
@@ -198,6 +193,15 @@ async def sertificate_generator(config):
     c.save()
     pdf = InputFile(f"{config['fio']}.pdf")
     if config['mail']:
+        account = Account((getenv('VSH_MAIL'), getenv('VSH_PASS')))
+        m = account.new_message()
+        m.to.add(config['mail'])
+        m.subject = 'Сертификат'
+        m.body = "George Best quote: I've stopped drinking, but only while I'm asleep."
+        att = Attachment(path=f"{config['fio']}.pdf")
+        m.attachments.append(att)
+        m.send()
+        '''
         mailserver.ehlo()
         mailserver.starttls()
         mailserver.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
@@ -210,7 +214,7 @@ async def sertificate_generator(config):
         attach.add_header('Content-Disposition', 'attachment', filename=f"{config['fio']}.pdf")
         msg.attach(attach)
         mailserver.send_message(msg)
-        '''
+        -------
         with open(f"{config['fio']}.pdf", "rb") as attachment:
             part = MIMEBase("application", "octet-stream")
             part.set_payload(attachment.read())
