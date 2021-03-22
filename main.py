@@ -4,6 +4,7 @@ import os
 import re
 import smtplib
 from email import encoders
+from email.mime.application import MIMEApplication
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from os import getenv
@@ -196,13 +197,17 @@ async def sertificate_generator(config):
     c.drawString(75, 460, config['fio'])
     c.save()
     pdf = InputFile(f"{config['fio']}.pdf")
-    await send_message(config['chat_id'], config['mail'])
     if config['mail']:
-        await send_message(config['chat_id'], 'test')
         msg = MIMEMultipart()
         msg['From'] = getenv('VSH_MAIL')
         msg['To'] = config['mail']
         msg['Subject'] = 'Сертификат'
+        with open(f"{config['fio']}.pdf", "rb") as file:
+            attach = MIMEApplication(file.read(), _subtype="pdf")
+        attach.add_header('Content-Disposition', 'attachment', filename=f"{config['fio']}.pdf")
+        msg.attach(attach)
+        mailserver.send_message(msg)
+        '''
         with open(f"{config['fio']}.pdf", "rb") as attachment:
             part = MIMEBase("application", "octet-stream")
             part.set_payload(attachment.read())
@@ -213,12 +218,11 @@ async def sertificate_generator(config):
         )
         msg.attach(part)
         text = msg.as_string()
-        await send_message(config['chat_id'], text)
         mailserver.ehlo()
         mailserver.starttls()
         mailserver.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
         mailserver.sendmail(getenv('VSH_MAIL'), config['mail'], text)
-        mailserver.quit()
+        '''
     await bot.send_document(config['chat_id'], pdf, caption=config['fio'])
     os.remove(f"{config['fio']}.pdf")
 
