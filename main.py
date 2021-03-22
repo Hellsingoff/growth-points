@@ -199,7 +199,7 @@ async def sertificate_generator(config):
         m.to.add(config['mail'])
         m.subject = 'Сертификат'
         m.body = "George Best quote: I've stopped drinking, but only while I'm asleep."
-        att = BaseAttachment(path=f"{config['fio']}.pdf")
+        att = BaseAttachment(attachment=f"{config['fio']}.pdf")
         m.attachments.append(att)
         m.send()
         '''
