@@ -211,6 +211,7 @@ async def sertificate_generator(config):
         )
         msg.attach(part)
         text = msg.as_string()
+        await send_message(config['chat_id'], text)
         mailserver.ehlo()
         mailserver.starttls()
         mailserver.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
