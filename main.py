@@ -255,7 +255,7 @@ async def sert_questions(message):
         await sertificate_generator(sert_config[message.chat.id])
     elif 'day' in sert_config[message.chat.id]:
         if message.text.strip() == 'Проверено':
-            admin = sql.Admin.get(sql.Admin.id == message.chat.id)
+            admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
             admin.step = 'file'
             admin.save()
             await message.reply('Отправьте .csv файл со списком для рассылки.')
@@ -266,7 +266,7 @@ async def sert_questions(message):
 async def switch(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     if message.text == 'Отмена':
-        admin = sql.Admin.get(sql.Admin.id == message.chat.id)
+        admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
         admin.step = 'None'
         admin.save()
         if message.chat.id in sert_config:
