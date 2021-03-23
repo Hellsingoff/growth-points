@@ -4,4 +4,3 @@ python-dotenv
 reportlab
 peewee
 psycopg2
-O365

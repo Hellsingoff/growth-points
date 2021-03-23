@@ -22,7 +22,6 @@ from reportlab.pdfgen import canvas
 
 import sql
 
-server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
 bot = Bot(token=getenv('TG_TOKEN'))
 dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
@@ -197,17 +196,19 @@ async def sertificate_generator(config):
     pdf = InputFile(f"{config['fio']}.pdf")
     if config['mail']:
         try:
-            server.ehlo()
-            server.login(getenv('VSH_MAIL'), getenv('VSH_PASS'))
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login("hellsingoff@gmail.com", getenv('MAIL_PASS'))
             msg = MIMEMultipart()
-            msg['From'] = getenv('VSH_MAIL')
+            msg['From'] = "hellsingoff@gmail.com"
             msg['To'] = config['mail']
-            msg['Subject'] = 'Сертификат'
-            with open(f"{config['fio']}.pdf", "rb") as file:
-                attach = MIMEApplication(file.read(), _subtype="pdf")
+            msg['Subject'] = f'Сертификат {config["event"]}'
+            with open(f"{config['fio']}.pdf", "rb") as pdf_file:
+                attach = MIMEApplication(pdf_file.read(), _subtype="pdf")
             attach.add_header('Content-Disposition', 'attachment', filename=f"{config['fio']}.pdf")
             msg.attach(attach)
             server.send_message(msg)
+            server.quit()
         except:
             await send_message(config['chat_id'], f'Ошибка отправки письма {config["mail"]}, {config["fio"]}')
             log.exception(f'Ошибка отправки письма {config["mail"]}, {config["fio"]}')
