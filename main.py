@@ -162,7 +162,7 @@ async def start(message: types.Message):
 
 
 @dp.message_handler(lambda message: message.text[:5] == '/sert' and
-                                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
+                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def sert(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     admin.step = 'sert'
@@ -227,13 +227,8 @@ async def add_adm(message: types.Message):
 
 # others (only admin)
 async def sert_questions(message):
-    if message.text == 'Отмена':
-        admin = sql.Admin.get(sql.Admin.id == message.chat.id)
-        admin.step = 'None'
-        admin.save()
-        if message.chat.id in sert_config:
-            sert_config.pop(message.chat.id)
-        await message.reply('Отменено')
+    if message.chat.id not in sert_config:
+        await message.reply('Вы уже начали процедуру в другом чате?')
     elif 'event_type' not in sert_config[message.chat.id]:
         sert_config[message.chat.id]['event_type'] = message.text.strip()
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
@@ -270,7 +265,14 @@ async def sert_questions(message):
 @dp.message_handler(lambda message: sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def switch(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
-    if admin.step == 'sert' and message.text:
+    if message.text == 'Отмена':
+        admin = sql.Admin.get(sql.Admin.id == message.chat.id)
+        admin.step = 'None'
+        admin.save()
+        if message.chat.id in sert_config:
+            sert_config.pop(message.chat.id)
+        await message.reply('Отменено')
+    elif admin.step == 'sert' and message.text:
         await sert_questions(message)
 
 
