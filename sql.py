@@ -31,7 +31,7 @@ class Mail(Model):
     event = CharField(null=False, max_length=300)
     day = SmallIntegerField(null=False)
     month_year = CharField(null=False, max_length=20)
-    chat_id = IntegerField(null=False)
+    chat_id = BigIntegerField(null=False)
 
     class Meta:
         database = db
