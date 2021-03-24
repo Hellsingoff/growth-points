@@ -198,9 +198,9 @@ async def sertificate_generator(config):
         try:
             server = smtplib.SMTP('smtp.gmail.com', 587)
             server.starttls()
-            server.login("hellsingoff@gmail.com", getenv('MAIL_PASS'))
+            server.login("tochkirosta.centr@gmail.com", getenv('MAIL_PASS'))
             msg = MIMEMultipart()
-            msg['From'] = "hellsingoff@gmail.com"
+            msg['From'] = "tochkirosta.centr@gmail.com"
             msg['To'] = config['mail']
             msg['Subject'] = f'Сертификат {config["event"]}'
             with open(f"{config['fio']}.pdf", "rb") as pdf_file:
