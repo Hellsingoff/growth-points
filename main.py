@@ -228,7 +228,7 @@ async def add_adm(message: types.Message):
 # others (only admin)
 async def sert_questions(message):
     if message.chat.id not in sert_config:
-        await message.reply('Вы уже начали процедуру в другом чате?')
+        pass
     elif 'event_type' not in sert_config[message.chat.id]:
         sert_config[message.chat.id]['event_type'] = message.text.strip()
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
@@ -285,19 +285,24 @@ async def file(message: types.Message):
         admin.save()
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "list.csv")
-        with codecs.open('list.csv', "r", encoding="utf_8") as csv_file:
-            reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            for row in reader:
-                if len(row) == 2:
-                    sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
-                                    mail=row[1].strip(),
-                                    event_type=sert_config[message.chat.id]['event_type'],
-                                    event=sert_config[message.chat.id]['event'],
-                                    day=sert_config[message.chat.id]['day'],
-                                    month_year=sert_config[message.chat.id]['month_year'],
-                                    chat_id=message.chat.id)
-        sert_config.pop(message.chat.id)
-        await sert_sender()
+        codecs_list = ['utf-8', 'windows-1251']
+        for codec in codecs_list:
+            try:
+                with codecs.open('list.csv', "r", encoding=codec) as csv_file:
+                    reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    for row in reader:
+                        if len(row) == 2:
+                            sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
+                                            mail=row[1].strip(),
+                                            event_type=sert_config[message.chat.id]['event_type'],
+                                            event=sert_config[message.chat.id]['event'],
+                                            day=sert_config[message.chat.id]['day'],
+                                            month_year=sert_config[message.chat.id]['month_year'],
+                                            chat_id=message.chat.id)
+                sert_config.pop(message.chat.id)
+                await sert_sender()
+            except:
+                await message.reply(f'Кодировка не {codec}')
 
 
 # error handler
