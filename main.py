@@ -285,7 +285,7 @@ async def file(message: types.Message):
         admin.save()
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "list.csv")
-        codecs_list = ['utf-8', 'windows-1251']
+        codecs_list = ['windows-1251', 'utf-8']
         for codec in codecs_list:
             try:
                 with codecs.open('list.csv', "r", encoding=codec) as csv_file:
@@ -299,10 +299,12 @@ async def file(message: types.Message):
                                             day=sert_config[message.chat.id]['day'],
                                             month_year=sert_config[message.chat.id]['month_year'],
                                             chat_id=message.chat.id)
+            except:
+                log.warning(f"didn't open file with {codec}")
+            else:
                 sert_config.pop(message.chat.id)
                 await sert_sender()
-            except:
-                await message.reply(f'Кодировка не {codec}')
+                break
 
 
 # error handler
