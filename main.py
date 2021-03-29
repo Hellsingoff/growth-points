@@ -191,8 +191,8 @@ async def sertificate_generator(config):
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
     c.setFont('Font', 28)
-    c.drawString(75, 470, config['fio'].split()[0])
-    c.drawString(75, 440, config['fio'].split(maxsplit=1)[1])
+    c.drawString(75, 475, config['fio'].split()[0])
+    c.drawString(75, 435, config['fio'].split(maxsplit=1)[1])
     c.save()
     pdf = InputFile(f"{config['fio']}.pdf")
     if config['mail']:
