@@ -174,25 +174,33 @@ async def sert(message: types.Message):
                         '\n(семинаре|вебинаре|конференции)?')
 
 
+def font_size(name):
+    name_len = 0
+    for char in name:
+        name_len += alphabet[char]
+    if name_len <= 3050:  # test
+        return 28
+    return int((3050/name_len) * 28)
+
+
 async def sertificate_generator(config):
-    coord = 350
+    coord = 380
     pdfmetrics.registerFont(TTFont('Font', 'font.ttf', 'UTF-8'))
     c = canvas.Canvas(f"{config['fio']}.pdf", pagesize=A4)
     c.setFont('Font', 18)
     c.setTitle(config['fio'])
     c.drawImage(background, 0, 0, width=width, height=height)
-    c.drawString(75, 530, "подтверждает, что ")
-    c.drawString(75, 380, f"принял(а) участие в {config['event_type']}")
+    c.drawString(75, 520, "подтверждает, что ")
+    c.drawString(75, 410, f"принял(а) участие в {config['event_type']}")
     for line in config['event'].splitlines():
         c.drawString(75, coord, line)
         coord -= 30
-    c.drawString(300, 260, f'дата выдачи   «{config["day"]}» '
+    c.drawString(300, 290, f'дата выдачи   «{config["day"]}» '
                            f'{config["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
-    c.setFont('Font', 28)
-    c.drawString(75, 475, config['fio'].split()[0])
-    c.drawString(75, 435, config['fio'].split(maxsplit=1)[1])
+    c.setFont('Font', font_size(config['fio']))
+    c.drawString(75, 460, config['fio'])
     c.save()
     pdf = InputFile(f"{config['fio']}.pdf")
     if config['mail']:
