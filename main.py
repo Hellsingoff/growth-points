@@ -98,18 +98,26 @@ async def text_splitter(text):
     result = ''
     length = 0
     words = []
-    arr = text.split()
-    for word in arr:
-        len_word = 0
-        for char in word:
-            if char in alphabet:
-                len_word += alphabet[char]
-            else:
-                len_word += 185
-        if len_word <= 4750:
-            words.append([len_word, word])
+    arr = text.split('\n')
+    for line in range(len(arr)):
+        arr[line] = arr[line].split()
+    for line in arr:
+        for word in line:
+            len_word = 0
+            for char in word:
+                if char in alphabet:
+                    len_word += alphabet[char]
+                else:
+                    len_word += 185
+            if len_word <= 4750:
+                words.append([len_word, word])
+        words.append([0, '\n'])
     while len(words):
-        if length + words[0][0] <= 4750:
+        if words[0][1] == '\n':
+            result += '\n'
+            length = 0
+            del words[0]
+        elif length + words[0][0] <= 4750:
             result += (words[0][1] + ' ')
             length += words[0][0]
             del words[0]
