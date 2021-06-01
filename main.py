@@ -309,7 +309,7 @@ async def file(message: types.Message):
                     reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     for row in reader:
                         log.warning(f"{row}")
-                        if len(row) < 1:
+                        if len(row) > 1:
                             log.warning(f"mail {row[0]}")
                             sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
                                             mail=row[1].strip(),
