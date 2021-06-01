@@ -308,6 +308,7 @@ async def file(message: types.Message):
                 with codecs.open('list.csv', "r", encoding=codec) as csv_file:
                     reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     for row in reader:
+                        log.warning(f"{row}")
                         if len(row) < 1:
                             log.warning(f"mail {row[0]}")
                             sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
