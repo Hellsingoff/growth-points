@@ -398,7 +398,7 @@ async def switch(message: types.Message):
         await message.reply('Отменено')
     elif admin.step == 'sert' and message.text:
         await sert_questions(message)
-    elif admin.step == 'blank' and (message.text or message.document):
+    elif admin.step == 'blank' and (message.text or message.caption):
         await blank_questions(message)
 
 
