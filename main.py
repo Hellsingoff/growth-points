@@ -181,12 +181,10 @@ async def blank_questions(message):
                             '[14]\n'
                             'к участию в конкурсе проектов')
     else:
-        file_csv = await bot.get_file(message.document.file_id)
-        await bot.download_file(file_csv.file_path, "blank.csv")
         codecs_list = ['windows-1251', 'utf-8']
         for codec in codecs_list:
             try:
-                with codecs.open('list.csv', "r", encoding=codec) as csv_file:
+                with codecs.open('blank.csv', "r", encoding=codec) as csv_file:
                     reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     for row in reader:
                         res_event = str(sert_config[message.chat.id]['event'])
