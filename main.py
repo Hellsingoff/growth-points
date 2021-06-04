@@ -181,9 +181,8 @@ async def blank_questions(message):
                             '[14]\n'
                             'к участию в конкурсе проектов')
     else:
-        log.warning('check')
         file_csv = await bot.get_file(message.document.file_id)
-        await bot.download_file(file_csv.file_path, "list.csv")
+        await bot.download_file(file_csv.file_path, "blank.csv")
         codecs_list = ['windows-1251', 'utf-8']
         for codec in codecs_list:
             try:
@@ -398,7 +397,7 @@ async def switch(message: types.Message):
         await message.reply('Отменено')
     elif admin.step == 'sert' and message.text:
         await sert_questions(message)
-    elif admin.step == 'blank' and (message.text or message.caption):
+    elif admin.step == 'blank' and message.text:
         await blank_questions(message)
 
 
@@ -431,6 +430,9 @@ async def file(message: types.Message):
                 sert_config.pop(message.chat.id)
                 await sert_sender()
                 break
+    else:
+        file_csv = await bot.get_file(message.document.file_id)
+        await bot.download_file(file_csv.file_path, "blank.csv")
 
 
 # error handler
