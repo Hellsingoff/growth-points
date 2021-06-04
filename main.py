@@ -377,6 +377,7 @@ async def switch(message: types.Message):
     elif admin.step == 'sert' and message.text:
         await sert_questions(message)
     elif admin.step == 'blank' and message.text:
+        log.warning('blank')
         await blank_questions(message)
 
 
