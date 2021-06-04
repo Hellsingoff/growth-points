@@ -431,6 +431,7 @@ async def file(message: types.Message):
     else:
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "blank.csv")
+        await message.reply('Done')
 
 
 # error handler
