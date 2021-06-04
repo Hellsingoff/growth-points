@@ -25,12 +25,12 @@ class Admin(Model):
 
 class Mail(Model):
     id = BigAutoField(primary_key=True)
-    name = CharField(null=False, max_length=100)
-    mail = CharField(null=False, max_length=50)
-    event_type = CharField(null=False, max_length=50)
-    event = CharField(null=False, max_length=300)
+    name = CharField(null=False, max_length=128)
+    mail = CharField(null=False, max_length=64)
+    event_type = CharField(null=False, max_length=64)
+    event = CharField(null=False)
     day = SmallIntegerField(null=False)
-    month_year = CharField(null=False, max_length=20)
+    month_year = CharField(null=False, max_length=32)
     chat_id = BigIntegerField(null=False)
 
     class Meta:

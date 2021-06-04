@@ -30,36 +30,9 @@ log = logging.getLogger('broadcast')
 pattern = re.compile('[^а-яА-Я –-]')
 width, height = A4
 background = 'sert.png'
-female = False
 sert_config = {}
-alphabet = {'ё': 79, '1': 87, '2': 87, '3': 87, '4': 87, '5': 87,
-            '6': 88, '7': 87, '8': 88, '9': 87, '0': 87, '-': 58, '=': 98,
-            'й': 93, 'ц': 93, 'у': 88, 'к': 85, 'е': 77, 'н': 93,
-            'г': 72, 'ш': 132, 'щ': 133, 'з': 69, 'х': 87, 'ъ': 90, '\\': 48,
-            'ф': 114, 'ы': 116, 'в': 82, 'а': 77, 'п': 93, 'р': 87,
-            'о': 87, 'л': 87, 'д': 90, 'ж': 120, 'э': 74,
-            'я': 79, 'ч': 87, 'с': 77, 'м': 110, 'и': 93,
-            'т': 74, 'ь': 77, 'б': 88, 'ю': 130, '.': 45,
-            'Ё': 106, '!': 58, '"': 77, '№': 164, ';': 50, '%': 145, ':': 48,
-            '?': 77, '*': 87, '(': 58, ')': 58, '_': 88, '+': 98,
-            'Й': 124, 'Ц': 127, 'У': 122, 'К': 114, 'Е': 103, 'Н': 124,
-            'Г': 101, 'Ш': 175, 'Щ': 183, 'З': 89, 'Х': 125, 'Ъ': 122, '/': 48,
-            'Ф': 135, 'Ы': 151, 'В': 114, 'А': 124, 'П': 127, 'Р': 95,
-            'О': 124, 'Л': 119, 'Д': 119, 'Ж': 157, 'Э': 114,
-            'Я': 116, 'Ч': 114, 'С': 114, 'М': 154, 'И': 127,
-            'Т': 106, 'Ь': 101, 'Б': 101, 'Ю': 177, ',': 42,
-            'q': 79, 'w': 127, 'e': 77, 'r': 59, 't': 52, 'y': 88,
-            'u': 88, 'i': 46, 'o': 88, 'p': 88, '[': 58, ']': 58,
-            'a': 77, 's': 66, 'd': 88, 'f': 58, 'g': 85,
-            'h': 85, 'j': 48, 'k': 88, 'l': 50, '\'': 58,
-            'z': 74, 'x': 82, 'c': 74, 'v': 86, 'b': 86, 'n': 85, 'm': 134,
-            '~': 93, '<': 98, '>': 98, '«': 87, '»': 87, '–': 85,
-            '`': 58, '@': 159, '#': 87, '$': 87, '^': 82, '&': 135,
-            'Q': 124, 'W': 164, 'E': 106, 'R': 114, 'T': 106, 'Y': 127,
-            'U': 127, 'I': 58, 'O': 124, 'P': 98, '{': 85, '}': 82,
-            'A': 125, 'S': 95, 'D': 128, 'F': 95, 'G': 124, 'H': 127, 'J': 66, 'K': 125, 'L': 103,
-            'Z': 106, 'X': 125, 'C': 114, 'V': 127, 'B': 116, 'N': 125, 'M': 153, '|': 35, ' ': 46
-            }
+pdfmetrics.registerFont(TTFont('Normal', 'normal.ttf', 'UTF-8'))
+pdfmetrics.registerFont(TTFont('Bold', 'bold.ttf', 'UTF-8'))
 
 
 # safe sending message function
@@ -94,36 +67,22 @@ async def send_message(user_id: int, text: str) -> bool:
     return False
 
 
-async def text_splitter(text):
+async def text_splitter(text, font_type, size):
     result = ''
-    length = 0
     words = []
     arr = text.split('\n')
     for line in range(len(arr)):
         arr[line] = arr[line].split()
+        arr[line][-1] = arr[line][-1] + '\n'
     for line in arr:
         for word in line:
-            len_word = 0
-            for char in word:
-                if char in alphabet:
-                    len_word += alphabet[char]
-                else:
-                    len_word += 185
-            if len_word <= 4750:
-                words.append([len_word, word])
-        words.append([0, '\n'])
-    while len(words):
-        if words[0][1] == '\n':
-            result += '\n'
-            length = 0
-            del words[0]
-        elif length + words[0][0] <= 4750:
-            result += (words[0][1] + ' ')
-            length += words[0][0]
-            del words[0]
-        else:
-            result += '\n'
-            length = 0
+            if pdfmetrics.stringWidth(f'{" ".join(words)} {word}', font_type, size) <= 500:
+                words.append(word)
+            else:
+                result += f"{' '.join(words)}\n"
+                words = [word]
+        result += ' '.join(words) if words else '\n'
+        words = []
     return result
 
 
@@ -165,8 +124,91 @@ async def start(message: types.Message):
 
 
 @dp.message_handler(commands=['id'])
-async def start(message: types.Message):
+async def user_id(message: types.Message):
     await message.reply(f'{str(message.chat.id)}')
+
+
+@dp.message_handler(lambda message: message.text[:5] == '/blank' and
+                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
+async def blank(message: types.Message):
+    admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+    admin.step = 'blank'
+    admin.save()
+    sert_config[message.chat.id] = {'mail': False,
+                                    'chat_id': message.chat.id,
+                                    'event_type': '***',
+                                    'fio': '***'}
+    await message.reply('дата выдачи   «__» _____ ____ г. (пример ввода: 31 января 2021)')
+
+
+async def blank_questions(message):
+    if message.chat.id not in sert_config:
+        pass
+    elif 'day' not in sert_config[message.chat.id] and \
+            len(arr := message.text.split(maxsplit=1)) == 2 and \
+            arr[0].isdigit():
+        sert_config[message.chat.id]['day'] = arr[0]
+        sert_config[message.chat.id]['month_year'] = arr[1]
+        await message.reply('''Оформите заполнение бланка по правилам, указанным ниже.
+                            Начиная от "СЕРТИФИКАТ" красным шрифтом и заканчивая датой (дату не ставить).
+                            К этому же сообщению прикрепить таблицу.''')
+        await message.reply('''{back} - в первой строке добавит фон\n[b] - сменить цвет шрифта на черный
+                            [r] - сменить шрифт на красный\n[18] - сменить размер шрифта на 18
+                            [24a] - сменить шрифт на 24, но при нехватке ширины автоматически уменьшить
+                            [f] - жирный шрифт\n[n] - нормальный шрифт
+                            <50> - отступ на 50 вниз\n{1} - вставит в поле данные из 1 колонки таблицы
+                            Email должен быть в первой колонке таблицы.''')
+        await message.reply('''Пример использования:
+                            {back}
+                            [r]
+                            [32]
+                            БЛАГОДАРСТВЕННОЕ
+                            ПИСЬМО
+                            <50>
+                            [b]
+                            [14]
+                            подтверждает, что
+                            <30>
+                            [f]
+                            [24a]
+                            {2}
+                            <30>
+                            [n]
+                            [14]
+                            подготовил(а) команду
+                            [24]
+                            {3}
+                            [14]
+                            к участию в конкурсе проектов
+                            ''')
+    elif 'event' not in sert_config[message.chat.id]:
+        file_csv = await bot.get_file(message.document.file_id)
+        await bot.download_file(file_csv.file_path, "list.csv")
+        codecs_list = ['windows-1251', 'utf-8']
+        for codec in codecs_list:
+            try:
+                with codecs.open('list.csv', "r", encoding=codec) as csv_file:
+                    reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    for row in reader:
+                        res_event = str(sert_config[message.chat.id]['event'])
+                        for col in range(1, len(row)):
+                            res_event = res_event.replace('{'+str(col+1)+'}', row[col])
+                        sql.Mail.create(name='***',
+                                        mail=row[0].strip(),
+                                        event_type='',
+                                        event=res_event,
+                                        day=sert_config[message.chat.id]['day'],
+                                        month_year=sert_config[message.chat.id]['month_year'],
+                                        chat_id=message.chat.id)
+            except:
+                log.warning(f"didn't open file with {codec}")
+            else:
+                sert_config.pop(message.chat.id)
+                await sert_sender()
+                admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+                admin.step = 'None'
+                admin.save()
+                break
 
 
 @dp.message_handler(lambda message: message.text[:5] == '/sert' and
@@ -182,35 +224,78 @@ async def sert(message: types.Message):
                         '\n(семинаре|вебинаре|конференции)?')
 
 
-def font_size(name):
-    name_len = 0
-    for char in name:
-        name_len += alphabet[char]
-    if name_len <= 3050:  # test
-        return 28
-    return int((3050/name_len) * 28)
+def name_size(name, font_type, size):
+    name_len = pdfmetrics.stringWidth(name, font_type, size)
+    if name_len <= 500:
+        return size
+    return int((500/name_len) * size)
+
+
+async def blank_generator(config):
+    coord = 580
+    font_type = 'Normal'
+    auto_size = False
+    font_size = 14
+    file_name = "document.pdf"
+    c = canvas.Canvas(file_name, pagesize=A4)
+    for line in config['event'].split('\n'):
+        if line == '{back}':
+            c.drawImage(background, 0, 0, width=width, height=height)
+        elif re.match(r'\[[0-9]+]', line):
+            font_size = int(line[1, -1])
+            auto_size = False
+        elif re.match(r'\[[0-9]+a]', line):
+            font_size = int(line[1, -2])
+            auto_size = True
+        elif line == '[r]':
+            c.setFillColorRGB(0.898, 0.227451, 0.1412)
+        elif line == '[b]':
+            c.setFillColorRGB(0, 0, 0)
+        elif line == '[n]':
+            font_type = 'Normal'
+        elif line == '[f]':
+            font_type = 'Bold'
+        elif re.match(r'<[0-9]+>', line):
+            coord -= int(line[1, -1])
+        else:
+            if auto_size:
+                auto_sized = name_size(line, font_type, font_size)
+                c.setFont(font_type, auto_sized)
+                c.drawString(70, coord, line)
+                coord -= int(auto_sized*1.5)
+            else:
+                c.setFont(font_type, font_size)
+                text = await text_splitter(line, font_type, font_size)
+                text = text.split('\n')
+                for string in text:
+                    c.drawString(70, coord, string)
+                    coord -= int(font_size * 1.5)
 
 
 async def sertificate_generator(config):
-    coord = 380
-    pdfmetrics.registerFont(TTFont('Font', 'font.ttf', 'UTF-8'))
-    c = canvas.Canvas(f"{config['fio']}.pdf", pagesize=A4)
-    c.setFont('Font', 18)
+    font_size = 14
+    coord = 400
+    file_name = f"{config['fio']}.pdf"
+    c = canvas.Canvas(file_name, pagesize=A4)
+    c.setFont('Normal', 14)
     c.setTitle(config['fio'])
     c.drawImage(background, 0, 0, width=width, height=height)
-    c.drawString(75, 520, "подтверждает, что ")
-    c.drawString(75, 410, f"принял(а) участие в {config['event_type']}")
+    c.drawString(75, 535, "подтверждает, что ")
+    c.drawString(75, 440, f"принял(а) участие в {config['event_type']}")
     for line in config['event'].splitlines():
         c.drawString(75, coord, line)
-        coord -= 30
-    c.drawString(300, 290, f'дата выдачи   «{config["day"]}» '
+        coord -= int(font_size*1.5)
+    c.drawString(300, 280, f'дата выдачи   «{config["day"]}» '
                            f'{config["month_year"]} г.')
-    c.drawString(75, 170, f'Директор {" " * 60} А.Н. Слизько')
+    c.drawString(75, 170, f'Директор {" " * 80} А.Н. Слизько')
     c.drawString(235, 120, f'г. Екатеринбург')
-    c.setFont('Font', font_size(config['fio']))
-    c.drawString(75, 460, config['fio'])
+    c.setFont('Bold', name_size(config['fio'], 'Bold', 24))
+    c.drawString(75, 485, config['fio'])
+    c.setFillColorRGB(0.898, 0.227451, 0.1412)
+    c.setFont('Normal', 32)
+    c.drawString(70, 580, "СЕРТИФИКАТ")
     c.save()
-    pdf = InputFile(f"{config['fio']}.pdf")
+    pdf = InputFile(file_name)
     if config['mail']:
         try:
             server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -222,7 +307,7 @@ async def sertificate_generator(config):
             msg['Subject'] = f'Сертификат {config["event"]}'
             with open(f"{config['fio']}.pdf", "rb") as pdf_file:
                 attach = MIMEApplication(pdf_file.read(), _subtype="pdf")
-            attach.add_header('Content-Disposition', 'attachment', filename=f"{config['fio']}.pdf")
+            attach.add_header('Content-Disposition', 'attachment', filename=file_name)
             msg.attach(attach)
             server.send_message(msg)
             server.quit()
@@ -230,7 +315,7 @@ async def sertificate_generator(config):
             await send_message(config['chat_id'], f'Ошибка отправки письма {config["mail"]}, {config["fio"]}')
             log.exception(f'Ошибка отправки письма {config["mail"]}, {config["fio"]}')
     await bot.send_document(config['chat_id'], pdf, caption=config['fio'])
-    os.remove(f"{config['fio']}.pdf")
+    os.remove(file_name)
 
 
 # adding a new admin
@@ -252,7 +337,7 @@ async def sert_questions(message):
                             f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
                             'Название мероприятия?')
     elif 'event' not in sert_config[message.chat.id]:
-        sert_config[message.chat.id]['event'] = await text_splitter(message.text.strip())
+        sert_config[message.chat.id]['event'] = await text_splitter(message.text.strip(), 'Normal', 14)
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                             f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
                             f'{sert_config[message.chat.id]["event"]}\n'
@@ -291,6 +376,8 @@ async def switch(message: types.Message):
         await message.reply('Отменено')
     elif admin.step == 'sert' and message.text:
         await sert_questions(message)
+    elif admin.step == 'blank' and message.text:
+        await blank_questions(message)
 
 
 @dp.message_handler(lambda message: sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists(),
@@ -339,7 +426,10 @@ async def sert_sender():
                   'month_year': mail.month_year,
                   'mail': mail.mail,
                   'chat_id': mail.chat_id}
-        await sertificate_generator(config)
+        if mail.name == '***':
+            await blank_generator(config)
+        else:
+            await sertificate_generator(config)
         mail.delete_instance()
 
 
