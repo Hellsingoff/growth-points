@@ -270,6 +270,28 @@ async def blank_generator(config):
                 for string in text:
                     c.drawString(70, coord, string)
                     coord -= int(font_size * 1.5)
+    c.save()
+    pdf = InputFile(file_name)
+    if config['mail']:
+        try:
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
+            server.login("tochkirosta.centr@gmail.com", getenv('MAIL_PASS'))
+            msg = MIMEMultipart()
+            msg['From'] = "tochkirosta.centr@gmail.com"
+            msg['To'] = config['mail']
+            msg['Subject'] = f'Сертификат {config["event"]}'
+            with open(f"{config['fio']}.pdf", "rb") as pdf_file:
+                attach = MIMEApplication(pdf_file.read(), _subtype="pdf")
+            attach.add_header('Content-Disposition', 'attachment', filename=file_name)
+            msg.attach(attach)
+            server.send_message(msg)
+            server.quit()
+        except:
+            await send_message(config['chat_id'], f'Ошибка отправки письма {config["mail"]}, {config["fio"]}')
+            log.exception(f'Ошибка отправки письма {config["mail"]}, {config["fio"]}')
+    await bot.send_document(config['chat_id'], pdf, caption=config['fio'])
+    os.remove(file_name)
 
 
 async def sertificate_generator(config):
@@ -376,8 +398,7 @@ async def switch(message: types.Message):
         await message.reply('Отменено')
     elif admin.step == 'sert' and message.text:
         await sert_questions(message)
-    elif admin.step == 'blank' and message.text:
-        log.warning('blank')
+    elif admin.step == 'blank' and (message.text or message.document):
         await blank_questions(message)
 
 
