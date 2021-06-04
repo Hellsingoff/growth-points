@@ -128,7 +128,7 @@ async def user_id(message: types.Message):
     await message.reply(f'{str(message.chat.id)}')
 
 
-@dp.message_handler(lambda message: message.text[:5] == '/blank' and
+@dp.message_handler(lambda message: message.text[:6] == '/blank' and
                     sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def blank(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
