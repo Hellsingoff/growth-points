@@ -180,7 +180,7 @@ async def blank_questions(message):
                             '{3}\n'
                             '[14]\n'
                             'к участию в конкурсе проектов')
-    elif 'event' not in sert_config[message.chat.id]:
+    else:
         log.warning('check')
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "list.csv")
