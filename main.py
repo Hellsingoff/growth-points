@@ -27,7 +27,7 @@ dp = Dispatcher(bot)
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('broadcast')
 
-pattern = re.compile('[^а-яА-Я –-]')
+pattern = re.compile('[^а-яА-ЯёЁ –-]')
 width, height = A4
 background = 'sert.png'
 sert_config = {}
