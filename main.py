@@ -351,7 +351,10 @@ async def sert_questions(message):
     if message.chat.id not in sert_config:
         pass
     elif 'event_type' not in sert_config[message.chat.id]:
-        sert_config[message.chat.id]['event_type'] = message.text.strip()
+        if (txt:=message.text.strip() == "-":
+            sert_config[message.chat.id]['event_type'] = ""
+        else:
+            sert_config[message.chat.id]['event_type'] = txt
         await message.reply('СЕРТИФИКАТ\nподтверждает, что\nИванов Иван Иванович\n'
                             f'принял участие в {sert_config[message.chat.id]["event_type"]}\n'
                             'Название мероприятия?')
