@@ -181,31 +181,29 @@ async def blank_questions(message):
                             '[14]\n'
                             'к участию в конкурсе проектов')
     else:
-        codecs_list = ['windows-1251', 'utf-8']
-        for codec in codecs_list:
-            try:
-                with codecs.open('blank.csv', "r", encoding=codec) as csv_file:
-                    reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    for row in reader:
-                        res_event = str(sert_config[message.chat.id]['event'])
-                        for col in range(1, len(row)):
-                            res_event = res_event.replace('{' + str(col + 1) + '}', row[col])
-                        sql.Mail.create(name='***',
-                                        mail=row[0].strip(),
-                                        event_type='',
-                                        event=res_event,
-                                        day=sert_config[message.chat.id]['day'],
-                                        month_year=sert_config[message.chat.id]['month_year'],
-                                        chat_id=message.chat.id)
-            except:
-                log.warning(f"didn't open file with {codec}")
-            else:
-                sert_config.pop(message.chat.id)
-                await sert_sender()
-                admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
-                admin.step = 'None'
-                admin.save()
-                break
+        try:
+            with codecs.open('blank.csv', "r", encoding='windows-1251') as csv_file:
+                reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                for row in reader:
+                    res_event = str(sert_config[message.chat.id]['event'])
+                    for col in range(1, len(row)):
+                        res_event = res_event.replace('{' + str(col + 1) + '}', row[col])
+                    sql.Mail.create(name='***',
+                                    mail=row[0].strip(),
+                                    event_type='',
+                                    event=res_event,
+                                    day=sert_config[message.chat.id]['day'],
+                                    month_year=sert_config[message.chat.id]['month_year'],
+                                    chat_id=message.chat.id)
+        except:
+            log.warning(f"didn't open file with 'windows-1251'")
+            await message.reply('Ошибка кодировки. UTF8 удален, используйте кодировку 1251.')
+        else:
+            sert_config.pop(message.chat.id)
+            await sert_sender()
+            admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
+            admin.step = 'None'
+            admin.save()
 
 
 @dp.message_handler(lambda message: message.text[:5] == '/sert' and
@@ -411,26 +409,24 @@ async def file(message: types.Message):
         admin.save()
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "list.csv")
-        codecs_list = ['windows-1251', 'utf-8']
-        for codec in codecs_list:
-            try:
-                with codecs.open('list.csv', "r", encoding=codec) as csv_file:
-                    reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    for row in reader:
-                        if len(row) > 1:
-                            sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
-                                            mail=row[1].strip(),
-                                            event_type=sert_config[message.chat.id]['event_type'],
-                                            event=sert_config[message.chat.id]['event'],
-                                            day=sert_config[message.chat.id]['day'],
-                                            month_year=sert_config[message.chat.id]['month_year'],
-                                            chat_id=message.chat.id)
-            except:
-                log.warning(f"didn't open file with {codec}")
-            else:
-                sert_config.pop(message.chat.id)
-                await sert_sender()
-                break
+        try:
+            with codecs.open('list.csv', "r", encoding='windows-1251') as csv_file:
+                reader = csv.reader(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                for row in reader:
+                    if len(row) > 1:
+                        sql.Mail.create(name=re.sub(pattern, '', row[0].strip()),
+                                        mail=row[1].strip(),
+                                        event_type=sert_config[message.chat.id]['event_type'],
+                                        event=sert_config[message.chat.id]['event'],
+                                        day=sert_config[message.chat.id]['day'],
+                                        month_year=sert_config[message.chat.id]['month_year'],
+                                        chat_id=message.chat.id)
+        except:
+            log.warning(f"didn't open file with 1251")
+            await message.reply('Ошибка кодировки. UTF8 удален, используйте кодировку 1251.')
+        else:
+            sert_config.pop(message.chat.id)
+            await sert_sender()
     else:
         file_csv = await bot.get_file(message.document.file_id)
         await bot.download_file(file_csv.file_path, "blank.csv")
