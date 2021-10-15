@@ -129,7 +129,7 @@ async def user_id(message: types.Message):
 
 
 @dp.message_handler(lambda message: message.text[:6] == '/blank' and
-                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
+                                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def blank(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     admin.step = 'blank'
@@ -189,7 +189,7 @@ async def blank_questions(message):
                     for row in reader:
                         res_event = str(sert_config[message.chat.id]['event'])
                         for col in range(1, len(row)):
-                            res_event = res_event.replace('{'+str(col+1)+'}', row[col])
+                            res_event = res_event.replace('{' + str(col + 1) + '}', row[col])
                         sql.Mail.create(name='***',
                                         mail=row[0].strip(),
                                         event_type='',
@@ -209,7 +209,7 @@ async def blank_questions(message):
 
 
 @dp.message_handler(lambda message: message.text[:5] == '/sert' and
-                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
+                                    sql.Admin.select().where(sql.Admin.id == message.from_user.id).exists())
 async def sert(message: types.Message):
     admin = sql.Admin.get(sql.Admin.id == message.from_user.id)
     admin.step = 'sert'
@@ -225,7 +225,7 @@ def name_size(name, font_type, size):
     name_len = pdfmetrics.stringWidth(name, font_type, size)
     if name_len <= 500:
         return size
-    return int((500/name_len) * size)
+    return int((500 / name_len) * size)
 
 
 async def blank_generator(config):
@@ -259,7 +259,7 @@ async def blank_generator(config):
                 auto_sized = name_size(line, font_type, font_size)
                 c.setFont(font_type, auto_sized)
                 c.drawString(70, coord, line)
-                coord -= int(auto_sized*1.5)
+                coord -= int(auto_sized * 1.5)
             else:
                 c.setFont(font_type, font_size)
                 text = await text_splitter(line, font_type, font_size)
@@ -303,7 +303,7 @@ async def sertificate_generator(config):
     c.drawString(75, 440, f"принял(а) участие в {config['event_type']}")
     for line in config['event'].splitlines():
         c.drawString(75, coord, line)
-        coord -= int(font_size*1.5)
+        coord -= int(font_size * 1.5)
     c.drawString(300, 280, f'дата выдачи   «{config["day"]}» '
                            f'{config["month_year"]} г.')
     c.drawString(75, 170, f'Директор {" " * 80} А.Н. Слизько')
@@ -351,7 +351,7 @@ async def sert_questions(message):
     if message.chat.id not in sert_config:
         pass
     elif 'event_type' not in sert_config[message.chat.id]:
-        if (txt:=message.text.strip() == "-"):
+        if (txt := message.text.strip()) == "-":
             sert_config[message.chat.id]['event_type'] = ""
         else:
             sert_config[message.chat.id]['event_type'] = txt
